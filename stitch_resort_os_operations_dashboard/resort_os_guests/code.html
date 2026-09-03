@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=inter:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"surface-variant":"#e1e2e4","surface-container-highest":"#e1e2e4","surface-tint":"#005db6","on-primary":"#ffffff","background":"#f8f9fb","tertiary-fixed":"#d9e3f0","tertiary":"#535d68","tertiary-fixed-dim":"#bdc7d4","outline-variant":"#c2c6d4","secondary-fixed":"#dde3ee","on-tertiary":"#ffffff","on-secondary-container":"#5f656e","surface-bright":"#f8f9fb","tertiary-container":"#6c7681","primary-container":"#2f74ce","on-tertiary-container":"#fdfcff","inverse-surface":"#2e3132","on-background":"#191c1e","secondary":"#595f68","on-primary-fixed":"#001b3d","surface-container-lowest":"#ffffff","secondary-fixed-dim":"#c1c7d2","primary-fixed-dim":"#a9c7ff","on-secondary-fixed-variant":"#414750","on-error-container":"#93000a","error":"#ba1a1a","surface-container-low":"#f2f4f6","primary-fixed":"#d6e3ff","surface-container":"#edeef0","on-primary-fixed-variant":"#00468c","outline":"#727783","on-tertiary-fixed-variant":"#3e4852","primary":"#005bb2","on-error":"#ffffff","surface":"#f8f9fb","surface-container-high":"#e7e8ea","on-surface":"#191c1e","on-secondary-fixed":"#161c24","on-tertiary-fixed":"#131d25","inverse-primary":"#a9c7ff","on-surface-variant":"#424752","surface-dim":"#d9dadc","error-container":"#ffdad6","on-secondary":"#ffffff","on-primary-container":"#fefcff","inverse-on-surface":"#f0f1f3","secondary-container":"#dde3ee"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-2xs":"0.25rem","sidebar-width":"15rem","space-2xl":"3rem","space-md":"1rem","gutter":"1rem","space-sm":"0.75rem","space-lg":"1.5rem","content-max-width":"88rem","space-xs":"0.5rem","space-xl":"2rem"},"fontFamily":{"data-sm":["ibmPlexMono"],"label-md":["inter"],"data-lg":["ibmPlexMono"],"headline-xl":["inter"],"body-md":["inter"],"data-md":["ibmPlexMono"],"headline-md":["inter"],"body-sm":["inter"],"headline-lg":["inter"],"label-sm":["inter"],"body-lg":["inter"]},"fontSize":{"data-sm":["12px",{"lineHeight":"16px","letterSpacing":"0em","fontWeight":"400"}],"label-md":["12px",{"lineHeight":"16px","letterSpacing":"0.01em","fontWeight":"500"}],"data-lg":["24px",{"lineHeight":"32px","letterSpacing":"-0.02em","fontWeight":"500"}],"headline-xl":["24px",{"lineHeight":"32px","letterSpacing":"-0.02em","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"20px","letterSpacing":"0em","fontWeight":"400"}],"data-md":["14px",{"lineHeight":"20px","letterSpacing":"-0.01em","fontWeight":"400"}],"headline-md":["16px",{"lineHeight":"24px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-sm":["13px",{"lineHeight":"18px","letterSpacing":"0em","fontWeight":"400"}],"headline-lg":["20px",{"lineHeight":"28px","letterSpacing":"-0.015em","fontWeight":"600"}],"label-sm":["11px",{"lineHeight":"14px","letterSpacing":"0.02em","fontWeight":"500"}],"body-lg":["15px",{"lineHeight":"22px","letterSpacing":"-0.005em","fontWeight":"400"}]}}}};</script></head><body class="bg-background font-body-md text-body-md text-on-surface antialiased min-h-screen flex flex-col"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest border-b border-surface-variant"><div class="h-14 max-w-7xl mx-auto px-6 flex items-center justify-between"><div class="flex items-center space-x-xl h-full"><span class="font-headline-md text-headline-md text-on-surface tracking-tight select-none">Resort OS</span><nav class="flex items-center space-x-lg h-full" data-active-classes="text-on-surface border-b-2 border-primary font-headline-md"><a aria-current="page" class="h-full inline-flex items-center px-space-2xs transition-colors text-on-surface border-b-2 border-primary font-headline-md" data-path="dashboard" href="#">Dashboard</a><a class="h-full inline-flex items-center px-space-2xs text-secondary hover:text-on-surface transition-colors font-body-md text-body-md" data-path="room-ops" href="#">Room Ops</a><a class="h-full inline-flex items-center px-space-2xs text-secondary hover:text-on-surface transition-colors font-body-md text-body-md" data-path="staff" href="#">Staff</a><a class="h-full inline-flex items-center px-space-2xs text-secondary hover:text-on-surface transition-colors font-body-md text-body-md" data-path="guests" href="#">Guests</a><a class="h-full inline-flex items-center px-space-2xs text-secondary hover:text-on-surface transition-colors font-body-md text-body-md" data-path="revenue" href="#">Revenue</a></nav></div><div class="flex items-center space-x-md"><div class="relative flex items-center justify-center"><div class="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center border border-surface-variant"><span class="material-symbols-outlined text-secondary text-[18px]">person</span></div><span class="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-primary ring-2 ring-surface-container-lowest"></span></div></div></div></header><main class="w-full pt-14 bg-background flex-1"><div class="max-w-7xl mx-auto px-6 py-space-xl"><div class="flex flex-col w-full">
+<div class="flex flex-col lg:flex-row items-start gap-space-lg w-full">
+<!-- Sidebar Navigation Rail -->
+<aside class="w-full lg:w-sidebar-width shrink-0 flex flex-col gap-space-xl">
+<div class="bg-surface-container-lowest rounded-xl p-space-sm shadow-sm flex flex-col gap-space-2xs">
+<div class="px-space-xs py-space-2xs text-secondary font-label-sm text-label-sm uppercase tracking-wider">
+          Operations Nav
+        </div>
+<a class="flex items-center gap-space-xs px-space-sm py-2 rounded-lg text-secondary hover:text-on-surface hover:bg-surface-container-low transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[18px]">space_dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-space-xs px-space-sm py-2 rounded-lg text-secondary hover:text-on-surface hover:bg-surface-container-low transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[18px]">meeting_room</span>
+<span>Room Ops</span>
+</a>
+<a class="flex items-center gap-space-xs px-space-sm py-2 rounded-lg text-secondary hover:text-on-surface hover:bg-surface-container-low transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[18px]">badge</span>
+<span>Staff</span>
+</a>
+<!-- Active Guests Item -->
+<a class="flex items-center gap-space-xs px-space-sm py-2 rounded-lg bg-primary-fixed text-primary font-headline-md text-headline-md shadow-xs" href="#">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">forum</span>
+<span>Guests</span>
+<span class="ml-auto bg-primary text-on-primary font-data-sm text-data-sm px-1.5 py-0.5 rounded-full">3</span>
+</a>
+<a class="flex items-center gap-space-xs px-space-sm py-2 rounded-lg text-secondary hover:text-on-surface hover:bg-surface-container-low transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[18px]">payments</span>
+<span>Revenue</span>
+</a>
+</div>
+<!-- Quick Metrics Overview Mini-Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<span class="text-secondary font-label-md text-label-md">Shift Overview</span>
+<div class="flex items-baseline justify-between">
+<span class="text-on-surface font-headline-xl text-headline-xl">94%</span>
+<span class="text-tertiary font-label-sm text-label-sm">Occupancy</span>
+</div>
+<div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 94%;"></div>
+</div>
+<div class="flex items-center justify-between text-secondary font-data-sm text-data-sm pt-space-2xs">
+<span>AI Assisted Turn:</span>
+<span class="font-semibold text-on-surface">3.8m avg</span>
+</div>
+</div>
+<!-- User Profile Chip -->
+<div class="bg-surface-container-lowest rounded-xl p-space-sm shadow-sm flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-full bg-surface-container-high flex items-center justify-center text-primary font-headline-md text-headline-md">
+          AM
+        </div>
+<div class="flex flex-col min-w-0">
+<span class="text-on-surface font-headline-md text-body-md font-semibold truncate leading-tight">Alex Morgan</span>
+<span class="text-secondary font-label-sm text-label-sm truncate">General Manager</span>
+</div>
+</div>
+</aside>
+<!-- Main Workspace Content -->
+<div class="flex-1 min-w-0 flex flex-col gap-space-lg">
+<!-- Top Bar: Title, Search, Actions -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md bg-surface-container-lowest p-space-lg rounded-xl shadow-sm">
+<div>
+<h1 class="text-on-surface font-headline-xl text-headline-xl tracking-tight">Guests</h1>
+<p class="text-secondary font-body-sm text-body-sm mt-0.5">AI concierge dispatch and guest request triage queue</p>
+</div>
+<div class="flex items-center gap-space-sm flex-wrap">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-secondary text-[18px]">search</span>
+<input class="w-64 md:w-80 pl-9 pr-3 py-2 bg-surface-container-low text-on-surface font-body-md text-body-md rounded-lg focus:outline-none focus:bg-surface-container-lowest transition-all" id="requestSearch" placeholder="Search guests, requests, rooms..." type="text"/>
+</div>
+<button aria-label="Notifications" class="relative p-2 rounded-lg bg-surface-container-low hover:bg-surface-container text-secondary hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-error"></span>
+</button>
+</div>
+</div>
+<!-- Filters & Category Navigation Bar -->
+<div class="flex items-center justify-between flex-wrap gap-space-sm">
+<div class="flex items-center gap-space-2xs bg-surface-container-lowest p-1 rounded-lg shadow-sm">
+<button class="filter-tab px-space-sm py-1.5 rounded-lg text-primary bg-primary-fixed font-label-md text-label-md transition-colors" id="filter-all" onclick="filterRequests('all')">
+            All Requests (4)
+          </button>
+<button class="filter-tab px-space-sm py-1.5 rounded-lg text-secondary hover:text-on-surface hover:bg-surface-container-low font-label-md text-label-md transition-colors" id="filter-pending" onclick="filterRequests('pending')">
+            Pending Review (3)
+          </button>
+<button class="filter-tab px-space-sm py-1.5 rounded-lg text-secondary hover:text-on-surface hover:bg-surface-container-low font-label-md text-label-md transition-colors" id="filter-sent" onclick="filterRequests('sent')">
+            Sent (1)
+          </button>
+</div>
+<div class="flex items-center gap-space-xs text-secondary font-label-sm text-label-sm">
+<span class="inline-block w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span>Live agent triage sync active</span>
+</div>
+</div>
+<!-- Guest Request Stack Cards -->
+<div class="flex flex-col gap-space-md" id="requestsList">
+<!-- Card 1: Sophia Jenkins -->
+<article class="request-card bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md transition-all" data-status="pending">
+<!-- Top Row -->
+<div class="flex items-center justify-between flex-wrap gap-space-xs">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-fixed flex items-center justify-center font-headline-md text-headline-md">
+                SJ
+              </div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="text-on-surface font-headline-md text-headline-md">Sophia Jenkins</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-data-sm text-data-sm">Room 203</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-low text-secondary font-label-sm text-label-sm">Deluxe</span>
+</div>
+<span class="text-tertiary font-data-sm text-data-sm">12m ago • Mobile App Concierge</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<span class="px-2.5 py-1 rounded-full bg-surface-container-high text-tertiary font-label-md text-label-md flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+                Pending
+              </span>
+</div>
+</div>
+<!-- Guest Request Text -->
+<div class="bg-surface-container-low rounded-lg p-space-md">
+<div class="text-secondary font-label-sm text-label-sm mb-1 uppercase tracking-wider">Guest's Original Request</div>
+<p class="text-on-surface font-body-lg text-body-lg italic">
+              “Could we get a recommendation for a quiet dinner for two tonight? Preferably Italian or seafood, around 7:00 PM.”
+            </p>
+</div>
+<!-- AI Recommendation Box -->
+<div class="bg-primary-fixed rounded-xl p-space-md flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-xs text-primary font-headline-md text-body-md">
+<span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+<span>AI Recommendation & Operational Context</span>
+</div>
+<p class="text-on-primary-fixed-variant font-body-md text-body-md">
+              Suggest <strong class="font-semibold text-primary">Mare Nostrum Ristorante at 7:30 PM</strong> — main dining kitchen is currently at peak load at 7:00 PM (88 dinner covers booked), whereas the 7:30 PM window offers optimal table turnover in the scenic garden patio with dedicated sommelier service.
+            </p>
+</div>
+<!-- Bottom Action Row -->
+<div class="flex items-center justify-between pt-space-xs flex-wrap gap-space-sm">
+<div class="flex items-center gap-space-xs text-tertiary font-data-sm text-data-sm">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+<span>Direct SMS + Guest App push pre-composed</span>
+</div>
+<div class="flex items-center gap-space-xs ml-auto">
+<button class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors">
+                Edit response
+              </button>
+<button class="px-4 py-1.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container transition-colors flex items-center gap-1.5" onclick="markCardSent(this)">
+<span class="material-symbols-outlined text-[16px]">send</span>
+<span>Send to guest</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Card 2: David & Clara Vance -->
+<article class="request-card bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md transition-all" data-status="pending">
+<!-- Top Row -->
+<div class="flex items-center justify-between flex-wrap gap-space-xs">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center font-headline-md text-headline-md">
+                DV
+              </div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="text-on-surface font-headline-md text-headline-md">David & Clara Vance</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-data-sm text-data-sm">Room 301</span>
+<span class="px-2 py-0.5 rounded bg-primary-fixed text-primary font-label-sm text-label-sm font-semibold">VIP Guest</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-low text-secondary font-label-sm text-label-sm">Ocean Suite</span>
+</div>
+<span class="text-tertiary font-data-sm text-data-sm">28m ago • In-Room Tablet</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<span class="px-2.5 py-1 rounded-full bg-surface-container-high text-tertiary font-label-md text-label-md flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+                Pending
+              </span>
+</div>
+</div>
+<!-- Guest Request Text -->
+<div class="bg-surface-container-low rounded-lg p-space-md">
+<div class="text-secondary font-label-sm text-label-sm mb-1 uppercase tracking-wider">Guest's Original Request</div>
+<p class="text-on-surface font-body-lg text-body-lg italic">
+              “Requesting extra towels and late checkout tomorrow around 1:00 PM if possible.”
+            </p>
+</div>
+<!-- AI Recommendation Box -->
+<div class="bg-primary-fixed rounded-xl p-space-md flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-xs text-primary font-headline-md text-body-md">
+<span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+<span>AI Recommendation & Operational Context</span>
+</div>
+<p class="text-on-primary-fixed-variant font-body-md text-body-md">
+              Counter-offer <strong class="font-semibold text-primary">12:30 PM complimentary late checkout</strong> — Room 301 has an incoming Diamond Tier VIP arrival scheduled at 14:00 PM; a 1:00 PM departure leaves only 60 minutes and risks a ~45m housekeeping turn bottleneck. Fresh plush towel set dispatched via Cart #2.
+            </p>
+</div>
+<!-- Bottom Action Row -->
+<div class="flex items-center justify-between pt-space-xs flex-wrap gap-space-sm">
+<div class="flex items-center gap-space-xs text-tertiary font-data-sm text-data-sm">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+<span>Automated PMS room block release at 12:30 PM</span>
+</div>
+<div class="flex items-center gap-space-xs ml-auto">
+<button class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors">
+                Edit response
+              </button>
+<button class="px-4 py-1.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container transition-colors flex items-center gap-1.5" onclick="markCardSent(this)">
+<span class="material-symbols-outlined text-[16px]">send</span>
+<span>Send to guest</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Card 3: Elena Rostova -->
+<article class="request-card bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md transition-all" data-status="pending">
+<!-- Top Row -->
+<div class="flex items-center justify-between flex-wrap gap-space-xs">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-fixed flex items-center justify-center font-headline-md text-headline-md">
+                ER
+              </div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="text-on-surface font-headline-md text-headline-md">Elena Rostova</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-data-sm text-data-sm">Room 104</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-low text-secondary font-label-sm text-label-sm">Deluxe Garden</span>
+</div>
+<span class="text-tertiary font-data-sm text-data-sm">45m ago • Voice Assistant</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<span class="px-2.5 py-1 rounded-full bg-surface-container-high text-tertiary font-label-md text-label-md flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+                Pending
+              </span>
+</div>
+</div>
+<!-- Guest Request Text -->
+<div class="bg-surface-container-low rounded-lg p-space-md">
+<div class="text-secondary font-label-sm text-label-sm mb-1 uppercase tracking-wider">Guest's Original Request</div>
+<p class="text-on-surface font-body-lg text-body-lg italic">
+              “Spa booking for couples deep tissue massage this afternoon. Looking for something tranquil around 4 or 5 PM.”
+            </p>
+</div>
+<!-- AI Recommendation Box -->
+<div class="bg-primary-fixed rounded-xl p-space-md flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-xs text-primary font-headline-md text-body-md">
+<span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+<span>AI Recommendation & Operational Context</span>
+</div>
+<p class="text-on-primary-fixed-variant font-body-md text-body-md">
+              Recommend <strong class="font-semibold text-primary">16:30 slot at Lagoon Cabana Suite</strong> — Spa treatment roster is fully staffed (8/8 therapists active), and the cabana offers complete acoustic privacy before evening lagoon lighting transitions.
+            </p>
+</div>
+<!-- Bottom Action Row -->
+<div class="flex items-center justify-between pt-space-xs flex-wrap gap-space-sm">
+<div class="flex items-center gap-space-xs text-tertiary font-data-sm text-data-sm">
+<span class="material-symbols-outlined text-[16px]">spa</span>
+<span>Hold placed in SpaSoft system for 20m</span>
+</div>
+<div class="flex items-center gap-space-xs ml-auto">
+<button class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors">
+                Edit response
+              </button>
+<button class="px-4 py-1.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container transition-colors flex items-center gap-1.5" onclick="markCardSent(this)">
+<span class="material-symbols-outlined text-[16px]">send</span>
+<span>Send to guest</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Card 4: Marcus Brody (Already Sent) -->
+<article class="request-card bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md transition-all" data-status="sent">
+<!-- Top Row -->
+<div class="flex items-center justify-between flex-wrap gap-space-xs">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed-dim text-on-secondary-fixed flex items-center justify-center font-headline-md text-headline-md">
+                MB
+              </div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="text-on-surface font-headline-md text-headline-md">Marcus Brody</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-data-sm text-data-sm">Room 402</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-low text-secondary font-label-sm text-label-sm">Penthouse</span>
+</div>
+<span class="text-tertiary font-data-sm text-data-sm">1h 10m ago • Front Desk Transfer</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<span class="px-2.5 py-1 rounded-full bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                Sent
+              </span>
+</div>
+</div>
+<!-- Guest Request Text -->
+<div class="bg-surface-container-low rounded-lg p-space-md">
+<div class="text-secondary font-label-sm text-label-sm mb-1 uppercase tracking-wider">Guest's Original Request</div>
+<p class="text-on-surface font-body-lg text-body-lg italic">
+              “Airport transfer arrangements for 06:30 AM flight tomorrow. Two carry-ons and one oversized surf bag.”
+            </p>
+</div>
+<!-- AI Recommendation Box -->
+<div class="bg-surface-container-low rounded-xl p-space-md flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-xs text-secondary font-headline-md text-body-md">
+<span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+<span>AI Recommendation & Operational Context</span>
+</div>
+<p class="text-on-surface-variant font-body-md text-body-md">
+              Booked <strong class="font-semibold text-on-surface">private luxury hybrid shuttle dispatch at 04:45 AM</strong> with bellhop escort for surf gear scheduled at 04:30 AM. Chauffeur assigned (Vito Corleone, Van #4).
+            </p>
+</div>
+<!-- Bottom Action Row -->
+<div class="flex items-center justify-between pt-space-xs flex-wrap gap-space-sm">
+<div class="flex items-center gap-space-xs text-secondary font-data-sm text-data-sm">
+<span class="material-symbols-outlined text-[16px]">done_all</span>
+<span>Sent 35m ago by Elena Lin (Concierge)</span>
+</div>
+<div class="flex items-center gap-space-xs ml-auto">
+<button class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>View message</span>
+</button>
+</div>
+</div>
+</article>
+</div>
+<!-- Filter Empty State (Initially Hidden) -->
+<div class="hidden bg-surface-container-lowest rounded-xl p-space-2xl text-center flex-col items-center justify-center gap-space-sm shadow-sm" id="emptyState">
+<div class="w-12 h-12 rounded-full bg-surface-container-low flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[24px]">inbox</span>
+</div>
+<h3 class="text-on-surface font-headline-md text-headline-md">No requests found</h3>
+<p class="text-secondary font-body-sm text-body-sm max-w-sm">
+          There are no guest requests matching this filter right now. Incoming concierge inquiries will appear in real time.
+        </p>
+</div>
+</div>
+</div>
+</div>
+<script>
+  function filterRequests(status) {
+    const cards = document.querySelectorAll('.request-card');
+    const emptyState = document.getElementById('emptyState');
+    let visibleCount = 0;
+
+    // Update active tab styles
+    const tabs = ['all', 'pending', 'sent'];
+    tabs.forEach(tabKey => {
+      const btn = document.getElementById(`filter-${tabKey}`);
+      if (btn) {
+        if (tabKey === status) {
+          btn.className = 'filter-tab px-space-sm py-1.5 rounded-lg text-primary bg-primary-fixed font-label-md text-label-md transition-colors';
+        } else {
+          btn.className = 'filter-tab px-space-sm py-1.5 rounded-lg text-secondary hover:text-on-surface hover:bg-surface-container-low font-label-md text-label-md transition-colors';
+        }
+      }
+    });
+
+    cards.forEach(card => {
+      const cardStatus = card.getAttribute('data-status');
+      if (status === 'all' || cardStatus === status) {
+        card.classList.remove('hidden');
+        card.classList.add('flex');
+        visibleCount++;
+      } else {
+        card.classList.add('hidden');
+        card.classList.remove('flex');
+      }
+    });
+
+    if (visibleCount === 0) {
+      emptyState.classList.remove('hidden');
+      emptyState.classList.add('flex');
+    } else {
+      emptyState.classList.add('hidden');
+      emptyState.classList.remove('flex');
+    }
+  }
+
+  function markCardSent(buttonElement) {
+    const card = buttonElement.closest('article');
+    card.setAttribute('data-status', 'sent');
+
+    // Update status badge
+    const badgeContainer = card.querySelector('.request-card > div:first-child > div:last-child');
+    if (badgeContainer) {
+      badgeContainer.innerHTML = `
+        <span class="px-2.5 py-1 rounded-full bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-1">
+          <span class="material-symbols-outlined text-[14px]">check_circle</span>
+          Sent
+        </span>
+      `;
+    }
+
+    // Update bottom action row
+    const actionRow = card.querySelector('.request-card > div:last-child');
+    if (actionRow) {
+      actionRow.innerHTML = `
+        <div class="flex items-center gap-space-xs text-secondary font-data-sm text-data-sm">
+          <span class="material-symbols-outlined text-[16px]">done_all</span>
+          <span>Sent just now by Alex Morgan</span>
+        </div>
+        <div class="flex items-center gap-space-xs ml-auto">
+          <button class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors flex items-center gap-1">
+            <span class="material-symbols-outlined text-[16px]">visibility</span>
+            <span>View message</span>
+          </button>
+        </div>
+      `;
+    }
+  }
+
+  // Live client-side search input listener
+  document.getElementById('requestSearch')?.addEventListener('input', function(e) {
+    const term = e.target.value.toLowerCase();
+    const cards = document.querySelectorAll('.request-card');
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+      const text = card.textContent.toLowerCase();
+      if (text.includes(term)) {
+        card.classList.remove('hidden');
+        card.classList.add('flex');
+        visibleCount++;
+      } else {
+        card.classList.add('hidden');
+        card.classList.remove('flex');
+      }
+    });
+
+    const emptyState = document.getElementById('emptyState');
+    if (visibleCount === 0) {
+      emptyState.classList.remove('hidden');
+      emptyState.classList.add('flex');
+    } else {
+      emptyState.classList.add('hidden');
+      emptyState.classList.remove('flex');
+    }
+  });
+</script></div></main><footer class="w-full bg-surface-container-lowest border-t border-surface-variant py-space-md mt-auto"><div class="max-w-7xl mx-auto px-6 flex items-center justify-between text-secondary font-label-md text-label-md"><span>Resort OS Operations Console © 2025</span><div class="flex items-center space-x-md"><span class="font-data-sm text-data-sm text-tertiary">v2.4.0-stable</span><span class="inline-block w-1.5 h-1.5 rounded-full bg-primary"></span><span class="font-label-md text-label-md text-secondary">All systems operational</span></div></div></footer></body></html>

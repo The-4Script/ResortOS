@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-container-lowest": "#ffffff", "primary-fixed": "#d6e3ff", "tertiary-fixed": "#d9e3f0", "on-secondary-fixed-variant": "#414750", "inverse-surface": "#2e3132", "tertiary-fixed-dim": "#bdc7d4", "outline": "#727783", "on-error": "#ffffff", "primary-container": "#2f74ce", "secondary-container": "#dde3ee", "error": "#ba1a1a", "background": "#f8f9fb", "tertiary": "#535d68", "primary-fixed-dim": "#a9c7ff", "surface-tint": "#005db6", "surface-container-high": "#e7e8ea", "on-error-container": "#93000a", "on-background": "#191c1e", "surface-bright": "#f8f9fb", "error-container": "#ffdad6", "surface-variant": "#e1e2e4", "on-surface-variant": "#424752", "surface-dim": "#d9dadc", "on-tertiary": "#ffffff", "surface-container-low": "#f2f4f6", "primary": "#005bb2", "on-secondary-container": "#5f656e", "secondary-fixed": "#dde3ee", "on-primary-container": "#fefcff", "surface": "#f8f9fb", "inverse-on-surface": "#f0f1f3", "on-secondary": "#ffffff", "on-tertiary-fixed": "#131d25", "secondary": "#595f68", "outline-variant": "#c2c6d4", "inverse-primary": "#a9c7ff", "surface-container": "#edeef0", "tertiary-container": "#6c7681", "surface-container-highest": "#e1e2e4", "on-primary-fixed": "#001b3d", "on-primary-fixed-variant": "#00468c", "on-tertiary-fixed-variant": "#3e4852", "on-secondary-fixed": "#161c24", "on-tertiary-container": "#fdfcff", "secondary-fixed-dim": "#c1c7d2", "on-surface": "#191c1e", "on-primary": "#ffffff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "content-max-width": "88rem", "space-2xl": "3rem", "space-2xs": "0.25rem", "gutter": "1rem", "space-md": "1rem", "sidebar-width": "15rem", "space-lg": "1.5rem", "space-sm": "0.75rem", "space-xs": "0.5rem", "space-xl": "2rem" }, "fontFamily": { "data-lg": [ "ibmPlexMono" ], "data-sm": [ "ibmPlexMono" ], "label-sm": [ "inter" ], "data-md": [ "ibmPlexMono" ], "body-sm": [ "inter" ], "headline-md": [ "inter" ], "headline-lg": [ "inter" ], "label-md": [ "inter" ], "body-md": [ "inter" ], "body-lg": [ "inter" ], "headline-xl": [ "inter" ] }, "fontSize": { "data-lg": [ "24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "500" } ], "data-sm": [ "12px", { "lineHeight": "16px", "letterSpacing": "0em", "fontWeight": "400" } ], "label-sm": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500" } ], "data-md": [ "14px", { "lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "400" } ], "body-sm": [ "13px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" } ], "headline-md": [ "16px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "headline-lg": [ "20px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600" } ], "label-md": [ "12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" } ], "body-md": [ "14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" } ], "body-lg": [ "15px", { "lineHeight": "22px", "letterSpacing": "-0.005em", "fontWeight": "400" } ], "headline-xl": [ "24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600" } ] } } } };</script></head><body class="bg-background font-body-md text-on-surface antialiased min-h-screen"><aside class="fixed left-0 top-0 bottom-0 w-sidebar-width bg-surface-container-lowest z-50 flex flex-col justify-between border-r border-surface-variant"><div class="flex flex-col"><div class="h-16 px-space-lg flex items-center gap-space-sm border-b border-surface-container"><div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[20px]">holiday_village</span></div><div class="flex flex-col"><span class="font-headline-md text-headline-md text-on-surface tracking-tight leading-none">Resort OS</span><span class="font-label-sm text-label-sm text-secondary leading-none mt-1">Hospitality Core</span></div></div><nav class="flex flex-col gap-space-2xs px-space-sm pt-space-md" data-active-classes="bg-primary-fixed text-primary font-headline-md rounded-lg"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg font-body-sm text-body-sm text-secondary hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[20px]">grid_view</span><span>Dashboard</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg font-body-sm text-body-sm text-secondary hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="room-ops" href="#"><span class="material-symbols-outlined text-[20px]">bed</span><span>Room Ops</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-sm py-2 transition-colors bg-primary-fixed text-primary font-headline-md rounded-lg" data-path="staff" href="#"><span class="material-symbols-outlined text-[20px]">group</span><span>Staff</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg font-body-sm text-body-sm text-secondary hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="guests" href="#"><span class="material-symbols-outlined text-[20px]">sensor_occupied</span><span>Guests</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg font-body-sm text-body-sm text-secondary hover:bg-surface-container-low hover:text-on-surface transition-colors" data-path="revenue" href="#"><span class="material-symbols-outlined text-[20px]">payments</span><span>Revenue</span></a></nav></div><div class="p-space-sm border-t border-surface-container"><div class="flex items-center justify-between p-space-xs rounded-lg hover:bg-surface-container-low transition-colors"><div class="flex items-center gap-space-xs"><div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-on-primary-fixed font-headline-md text-[12px]">AM</div><div class="flex flex-col min-w-0"><span class="font-headline-md text-label-md text-on-surface truncate leading-tight">Alex Morgan</span><span class="font-body-sm text-label-sm text-secondary truncate leading-tight">General Manager</span></div></div><button class="p-1 text-secondary hover:text-on-surface flex items-center justify-center"><span class="material-symbols-outlined text-[18px]">more_vert</span></button></div></div></aside><div class="pl-sidebar-width"><header class="fixed top-0 left-sidebar-width right-0 h-16 bg-surface-container-lowest border-b border-surface-variant z-40 px-space-xl flex items-center justify-between"><div class="flex items-center gap-space-md"><div class="relative flex items-center"><span class="material-symbols-outlined absolute left-3 text-secondary text-[18px]">search</span><input class="w-80 h-9 pl-9 pr-3 rounded-lg border border-surface-variant bg-surface-container-lowest font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary transition-colors" placeholder="Search staff, shifts, departments..." type="text"/></div></div><div class="flex items-center gap-space-md"><button class="relative w-9 h-9 flex items-center justify-center rounded-lg text-secondary hover:text-on-surface hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1.5 right-1.5 w-4 h-4 bg-error text-on-error rounded-full font-label-sm text-[10px] flex items-center justify-center font-bold leading-none">3</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="w-full pt-16 bg-surface min-h-screen px-space-xl py-space-xl"><div class="flex flex-col w-full gap-space-lg">
+<!-- Operational Benchmark Banner -->
+<section class="w-full bg-surface-container-lowest rounded-xl shadow-sm border-t-[3px] border-primary px-space-xl py-space-lg transition-all">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-lg">
+<!-- Benchmark Meta & Main Gauge -->
+<div class="flex flex-col sm:flex-row sm:items-center gap-space-lg">
+<div class="flex items-start gap-space-md">
+<div class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[24px]">domain</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-md text-headline-md text-on-surface">Current Occupancy Benchmark</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container font-label-sm text-label-sm text-secondary">Realtime</span>
+</div>
+<div class="flex items-baseline gap-space-sm mt-1">
+<span class="font-data-lg text-[34px] leading-none font-medium text-on-surface tracking-tight">94%</span>
+<span class="font-body-md text-body-sm text-secondary">occupancy — recommended staffing below</span>
+</div>
+<div class="flex items-center gap-2 mt-1.5 font-body-sm text-label-sm text-tertiary">
+<span class="w-1.5 h-1.5 rounded-full bg-primary inline-block"></span>
+<span>Projected 91% tomorrow (stable load)</span>
+<span class="text-outline-variant">•</span>
+<span>184 keys occupied of 196 total</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Metrics Pill & Primary Action -->
+<div class="flex flex-wrap sm:flex-nowrap items-center gap-space-md">
+<div class="flex flex-col gap-1 px-space-md py-2 rounded-lg bg-surface-container-low border border-surface-variant">
+<div class="flex items-center justify-between gap-space-md">
+<span class="font-body-sm text-label-sm text-secondary">Total staff on duty</span>
+<span class="font-data-md text-data-md font-medium text-on-surface">38 / 46 active</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-error shrink-0"></span>
+<span class="font-data-sm text-label-sm text-error font-medium">Overall deficit: -8 across 3 depts</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="h-9 px-3.5 rounded-lg border border-surface-variant bg-surface-container-lowest font-headline-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-1.5" id="btn-export">
+<span class="material-symbols-outlined text-[16px] text-secondary">file_download</span>
+<span>Export roster</span>
+</button>
+<button class="h-9 px-3.5 rounded-lg bg-primary text-on-primary font-headline-md text-label-md hover:bg-primary-container transition-colors shadow-sm flex items-center gap-1.5" id="btn-auto-adjust">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+<span>Auto-adjust shifts</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Department List Section Header -->
+<div class="flex items-center justify-between px-1">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-lg text-headline-lg text-on-surface">Departmental Allocations</span>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-data-sm text-label-sm">5 sectors monitored</span>
+</div>
+<div class="flex items-center gap-space-xs font-body-sm text-label-sm text-secondary">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+<span>Shift window: Day Shift (07:00 – 16:00)</span>
+</div>
+</div>
+<!-- Department Cards Stack -->
+<div class="flex flex-col gap-space-md w-full">
+<!-- Card 1: Housekeeping -->
+<article class="w-full bg-surface-container-lowest rounded-xl shadow-sm border-t-[3px] border-[#E0A93A] p-space-lg transition-all hover:bg-surface-container-lowest/80">
+<div class="flex flex-col gap-space-md">
+<div class="flex flex-col sm:flex-row sm:items-start justify-between gap-space-md">
+<div class="flex items-start gap-space-md">
+<div class="w-10 h-10 rounded-full bg-[#FEF3C7] text-[#B45309] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">cleaning_services</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<h3 class="font-headline-md text-headline-md text-on-surface">Housekeeping</h3>
+<span class="px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#B45309] font-data-sm text-label-sm font-medium">Gap: 3 staff</span>
+</div>
+<p class="font-body-sm text-body-sm text-secondary mt-0.5">Turnover, daily room maintenance &amp; laundry ops</p>
+</div>
+</div>
+<div class="flex flex-col sm:items-end">
+<div class="flex items-baseline gap-1.5">
+<span class="font-data-lg text-data-lg font-medium text-on-surface">8</span>
+<span class="font-data-md text-data-md text-outline">/</span>
+<span class="font-data-lg text-data-lg font-medium text-secondary">11</span>
+</div>
+<span class="font-body-sm text-label-sm text-secondary">Staff on duty / Recommended</span>
+</div>
+</div>
+<!-- Progress bar tracking -->
+<div class="w-full flex flex-col gap-1.5">
+<div class="w-full h-2 rounded-full bg-surface-container-high overflow-hidden">
+<div class="h-full rounded-full bg-[#E0A93A] transition-all duration-500" style="width: 73%;"></div>
+</div>
+<div class="flex justify-between font-data-sm text-label-sm text-tertiary">
+<span>73% coverage threshold</span>
+<span>-3 headcount deficit</span>
+</div>
+</div>
+<!-- Insight & Action Footer -->
+<div class="pt-space-sm border-t border-surface-variant flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+<div class="flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-[18px] text-[#B45309] shrink-0">warning</span>
+<span class="font-body-sm text-body-sm text-secondary">
+              Room turnover cycle delayed by <strong class="text-on-surface font-medium">~45 min</strong> under current 94% turnover demand. 3 rooms awaiting clean.
+            </span>
+</div>
+<div class="flex items-center gap-space-xs shrink-0 self-end sm:self-auto">
+<button class="h-8 px-3 rounded-lg border border-surface-variant bg-surface-container-lowest font-headline-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors">
+              Reassign
+            </button>
+<button class="h-8 px-3 rounded-lg bg-[#E0A93A] text-on-primary font-headline-md text-label-md hover:opacity-90 transition-opacity">
+              Call backup pool
+            </button>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 2: Front Desk & Concierge -->
+<article class="w-full bg-surface-container-lowest rounded-xl shadow-sm border-t-[3px] border-[#3FAE6A] p-space-lg transition-all hover:bg-surface-container-lowest/80">
+<div class="flex flex-col gap-space-md">
+<div class="flex flex-col sm:flex-row sm:items-start justify-between gap-space-md">
+<div class="flex items-start gap-space-md">
+<div class="w-10 h-10 rounded-full bg-[#DCFCE7] text-[#15803D] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">room_service</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<h3 class="font-headline-md text-headline-md text-on-surface">Front Desk &amp; Concierge</h3>
+<span class="px-2 py-0.5 rounded-full bg-[#DCFCE7] text-[#15803D] font-data-sm text-label-sm font-medium">Fully staffed</span>
+</div>
+<p class="font-body-sm text-body-sm text-secondary mt-0.5">Guest check-in/out, lobby services, phone dispatch</p>
+</div>
+</div>
+<div class="flex flex-col sm:items-end">
+<div class="flex items-baseline gap-1.5">
+<span class="font-data-lg text-data-lg font-medium text-on-surface">6</span>
+<span class="font-data-md text-data-md text-outline">/</span>
+<span class="font-data-lg text-data-lg font-medium text-secondary">6</span>
+</div>
+<span class="font-body-sm text-label-sm text-secondary">Staff on duty / Recommended</span>
+</div>
+</div>
+<!-- Progress bar tracking -->
+<div class="w-full flex flex-col gap-1.5">
+<div class="w-full h-2 rounded-full bg-surface-container-high overflow-hidden">
+<div class="h-full rounded-full bg-[#3FAE6A] transition-all duration-500" style="width: 100%;"></div>
+</div>
+<div class="flex justify-between font-data-sm text-label-sm text-tertiary">
+<span>100% optimum coverage</span>
+<span>Capacity stable</span>
+</div>
+</div>
+<!-- Insight & Action Footer -->
+<div class="pt-space-sm border-t border-surface-variant flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+<div class="flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-[18px] text-[#15803D] shrink-0">check_circle</span>
+<span class="font-body-sm text-body-sm text-secondary">
+              Peak arrival wave projected at <strong class="text-on-surface font-medium">14:00 (14 arrivals)</strong>. Shift coverage optimal.
+            </span>
+</div>
+<div class="flex items-center gap-space-xs shrink-0 self-end sm:self-auto">
+<button class="h-8 px-3 rounded-lg border border-surface-variant bg-surface-container-lowest font-headline-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors">
+              View roster
+            </button>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 3: Kitchen & Food & Beverage -->
+<article class="w-full bg-surface-container-lowest rounded-xl shadow-sm border-t-[3px] border-[#E0A93A] p-space-lg transition-all hover:bg-surface-container-lowest/80">
+<div class="flex flex-col gap-space-md">
+<div class="flex flex-col sm:flex-row sm:items-start justify-between gap-space-md">
+<div class="flex items-start gap-space-md">
+<div class="w-10 h-10 rounded-full bg-[#FEF3C7] text-[#B45309] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">restaurant</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<h3 class="font-headline-md text-headline-md text-on-surface">Kitchen &amp; Culinary</h3>
+<span class="px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#B45309] font-data-sm text-label-sm font-medium">Gap: 3 staff</span>
+</div>
+<p class="font-body-sm text-body-sm text-secondary mt-0.5">Main dining room, banquet prep &amp; 24/7 in-room dining</p>
+</div>
+</div>
+<div class="flex flex-col sm:items-end">
+<div class="flex items-baseline gap-1.5">
+<span class="font-data-lg text-data-lg font-medium text-on-surface">12</span>
+<span class="font-data-md text-data-md text-outline">/</span>
+<span class="font-data-lg text-data-lg font-medium text-secondary">15</span>
+</div>
+<span class="font-body-sm text-label-sm text-secondary">Staff on duty / Recommended</span>
+</div>
+</div>
+<!-- Progress bar tracking -->
+<div class="w-full flex flex-col gap-1.5">
+<div class="w-full h-2 rounded-full bg-surface-container-high overflow-hidden">
+<div class="h-full rounded-full bg-[#E0A93A] transition-all duration-500" style="width: 80%;"></div>
+</div>
+<div class="flex justify-between font-data-sm text-label-sm text-tertiary">
+<span>80% coverage threshold</span>
+<span>-3 banquet / line prep deficit</span>
+</div>
+</div>
+<!-- Insight & Action Footer -->
+<div class="pt-space-sm border-t border-surface-variant flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+<div class="flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-[18px] text-[#B45309] shrink-0">info</span>
+<span class="font-body-sm text-body-sm text-secondary">
+              Dinner rush bookings: <strong class="text-on-surface font-medium">88 covers confirmed</strong>. In-room dining queue latency at risk.
+            </span>
+</div>
+<div class="flex items-center gap-space-xs shrink-0 self-end sm:self-auto">
+<button class="h-8 px-3 rounded-lg border border-surface-variant bg-surface-container-lowest font-headline-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors">
+              Shift notes
+            </button>
+<button class="h-8 px-3 rounded-lg bg-primary text-on-primary font-headline-md text-label-md hover:bg-primary-container transition-colors">
+              Request temp staff
+            </button>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 4: Facilities & Engineering -->
+<article class="w-full bg-surface-container-lowest rounded-xl shadow-sm border-t-[3px] border-[#E0A93A] p-space-lg transition-all hover:bg-surface-container-lowest/80">
+<div class="flex flex-col gap-space-md">
+<div class="flex flex-col sm:flex-row sm:items-start justify-between gap-space-md">
+<div class="flex items-start gap-space-md">
+<div class="w-10 h-10 rounded-full bg-[#FEF3C7] text-[#B45309] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">build</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<h3 class="font-headline-md text-headline-md text-on-surface">Facilities &amp; Engineering</h3>
+<span class="px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#B45309] font-data-sm text-label-sm font-medium">Gap: 2 staff</span>
+</div>
+<p class="font-body-sm text-body-sm text-secondary mt-0.5">HVAC systems, electrical plant, room maintenance dispatches</p>
+</div>
+</div>
+<div class="flex flex-col sm:items-end">
+<div class="flex items-baseline gap-1.5">
+<span class="font-data-lg text-data-lg font-medium text-on-surface">4</span>
+<span class="font-data-md text-data-md text-outline">/</span>
+<span class="font-data-lg text-data-lg font-medium text-secondary">6</span>
+</div>
+<span class="font-body-sm text-label-sm text-secondary">Staff on duty / Recommended</span>
+</div>
+</div>
+<!-- Progress bar tracking -->
+<div class="w-full flex flex-col gap-1.5">
+<div class="w-full h-2 rounded-full bg-surface-container-high overflow-hidden">
+<div class="h-full rounded-full bg-[#E0A93A] transition-all duration-500" style="width: 67%;"></div>
+</div>
+<div class="flex justify-between font-data-sm text-label-sm text-tertiary">
+<span>67% capacity</span>
+<span>-2 on-call engineers</span>
+</div>
+</div>
+<!-- Insight & Action Footer -->
+<div class="pt-space-sm border-t border-surface-variant flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+<div class="flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-[18px] text-[#B45309] shrink-0">engineering</span>
+<span class="font-body-sm text-body-sm text-secondary">
+              Room 204 critical HVAC fault assigned to tech Marcus Vance. <strong class="text-on-surface font-medium">2 unassigned maintenance tickets.</strong>
+</span>
+</div>
+<div class="flex items-center gap-space-xs shrink-0 self-end sm:self-auto">
+<button class="h-8 px-3 rounded-lg border border-surface-variant bg-surface-container-lowest font-headline-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors">
+              Ticket queue (7)
+            </button>
+<button class="h-8 px-3 rounded-lg bg-primary text-on-primary font-headline-md text-label-md hover:bg-primary-container transition-colors">
+              Dispatch engineer
+            </button>
+</div>
+</div>
+</div>
+</article>
+<!-- Card 5: Spa & Wellness Services -->
+<article class="w-full bg-surface-container-lowest rounded-xl shadow-sm border-t-[3px] border-[#3FAE6A] p-space-lg transition-all hover:bg-surface-container-lowest/80">
+<div class="flex flex-col gap-space-md">
+<div class="flex flex-col sm:flex-row sm:items-start justify-between gap-space-md">
+<div class="flex items-start gap-space-md">
+<div class="w-10 h-10 rounded-full bg-[#DCFCE7] text-[#15803D] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">spa</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<h3 class="font-headline-md text-headline-md text-on-surface">Spa &amp; Wellness Services</h3>
+<span class="px-2 py-0.5 rounded-full bg-[#DCFCE7] text-[#15803D] font-data-sm text-label-sm font-medium">Fully staffed</span>
+</div>
+<p class="font-body-sm text-body-sm text-secondary mt-0.5">Poolside cabanas, wellness center, fitness facility</p>
+</div>
+</div>
+<div class="flex flex-col sm:items-end">
+<div class="flex items-baseline gap-1.5">
+<span class="font-data-lg text-data-lg font-medium text-on-surface">8</span>
+<span class="font-data-md text-data-md text-outline">/</span>
+<span class="font-data-lg text-data-lg font-medium text-secondary">8</span>
+</div>
+<span class="font-body-sm text-label-sm text-secondary">Staff on duty / Recommended</span>
+</div>
+</div>
+<!-- Progress bar tracking -->
+<div class="w-full flex flex-col gap-1.5">
+<div class="w-full h-2 rounded-full bg-surface-container-high overflow-hidden">
+<div class="h-full rounded-full bg-[#3FAE6A] transition-all duration-500" style="width: 100%;"></div>
+</div>
+<div class="flex justify-between font-data-sm text-label-sm text-tertiary">
+<span>100% capacity balance</span>
+<span>Zero open slots</span>
+</div>
+</div>
+<!-- Insight & Action Footer -->
+<div class="pt-space-sm border-t border-surface-variant flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+<div class="flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-[18px] text-[#15803D] shrink-0">verified</span>
+<span class="font-body-sm text-body-sm text-secondary">
+              All spa appointments booked to capacity. Shift roster balanced through <strong class="text-on-surface font-medium">20:00</strong>.
+            </span>
+</div>
+<div class="flex items-center gap-space-xs shrink-0 self-end sm:self-auto">
+<button class="h-8 px-3 rounded-lg border border-surface-variant bg-surface-container-lowest font-headline-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors">
+              View roster
+            </button>
+</div>
+</div>
+</div>
+</article>
+</div>
+<!-- Operational Roster Summary Table Widget -->
+<section class="w-full bg-surface-container-lowest rounded-xl shadow-sm border border-surface-variant overflow-hidden mt-space-sm">
+<div class="px-space-lg py-space-md border-b border-surface-variant bg-surface-container-low flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">badge</span>
+<h4 class="font-headline-md text-headline-md text-on-surface">Recent Shift Activity &amp; Swaps</h4>
+</div>
+<span class="font-label-sm text-label-sm text-secondary">Live shift stream • Updated 4m ago</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse font-body-sm text-body-sm">
+<thead>
+<tr class="border-b border-surface-variant bg-surface-container-lowest text-secondary font-label-md text-label-md">
+<th class="py-3 px-space-lg font-medium">Staff Member</th>
+<th class="py-3 px-space-md font-medium">Department</th>
+<th class="py-3 px-space-md font-medium">Assigned Zone</th>
+<th class="py-3 px-space-md font-medium">Shift Time</th>
+<th class="py-3 px-space-md font-medium">Status</th>
+<th class="py-3 px-space-lg font-medium text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-variant text-on-surface">
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-space-lg">
+<div class="flex items-center gap-space-xs">
+<div class="w-7 h-7 rounded-full bg-primary-fixed text-primary font-data-sm text-[11px] font-medium flex items-center justify-center">MV</div>
+<div class="flex flex-col">
+<span class="font-headline-md text-body-sm text-on-surface leading-tight">Marcus Vance</span>
+<span class="font-label-sm text-label-sm text-secondary">Lead HVAC Tech</span>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md text-secondary">Facilities &amp; Eng</td>
+<td class="py-3 px-space-md font-data-sm text-data-sm">Wing B • Rm 204</td>
+<td class="py-3 px-space-md font-data-sm text-data-sm text-secondary">07:00 - 15:30</td>
+<td class="py-3 px-space-md">
+<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-label-sm text-[11px] font-medium inline-flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#E0A93A]"></span>
+                On Call (Dispatched)
+              </span>
+</td>
+<td class="py-3 px-space-lg text-right">
+<button class="text-primary hover:text-primary-container font-headline-md text-label-md">Message</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-space-lg">
+<div class="flex items-center gap-space-xs">
+<div class="w-7 h-7 rounded-full bg-secondary-fixed text-secondary font-data-sm text-[11px] font-medium flex items-center justify-center">EL</div>
+<div class="flex flex-col">
+<span class="font-headline-md text-body-sm text-on-surface leading-tight">Elena Lin</span>
+<span class="font-label-sm text-label-sm text-secondary">Senior Concierge</span>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md text-secondary">Front Desk</td>
+<td class="py-3 px-space-md font-data-sm text-data-sm">Grand Lobby</td>
+<td class="py-3 px-space-md font-data-sm text-data-sm text-secondary">08:00 - 16:30</td>
+<td class="py-3 px-space-md">
+<span class="px-2 py-0.5 rounded-full bg-[#DCFCE7] text-[#15803D] font-label-sm text-[11px] font-medium inline-flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#3FAE6A]"></span>
+                Active Station
+              </span>
+</td>
+<td class="py-3 px-space-lg text-right">
+<button class="text-primary hover:text-primary-container font-headline-md text-label-md">Message</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-space-lg">
+<div class="flex items-center gap-space-xs">
+<div class="w-7 h-7 rounded-full bg-error-container text-on-error-container font-data-sm text-[11px] font-medium flex items-center justify-center">JT</div>
+<div class="flex flex-col">
+<span class="font-headline-md text-body-sm text-on-surface leading-tight">Javier Torres</span>
+<span class="font-label-sm text-label-sm text-secondary">Room Attendant</span>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md text-secondary">Housekeeping</td>
+<td class="py-3 px-space-md font-data-sm text-data-sm">Villas 12 - 18</td>
+<td class="py-3 px-space-md font-data-sm text-data-sm text-secondary">07:30 - 16:00</td>
+<td class="py-3 px-space-md">
+<span class="px-2 py-0.5 rounded-full bg-error-container text-on-error-container font-label-sm text-[11px] font-medium inline-flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                Break Overflow (+12m)
+              </span>
+</td>
+<td class="py-3 px-space-lg text-right">
+<button class="text-primary hover:text-primary-container font-headline-md text-label-md">Reassign</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<script>
+  // Micro-interaction handlers for staff roster operations
+  document.getElementById('btn-auto-adjust')?.addEventListener('click', function() {
+    const originalText = this.innerHTML;
+    this.innerHTML = `<span class="material-symbols-outlined text-[16px] animate-spin">refresh</span><span>Balancing shifts...</span>`;
+    setTimeout(() => {
+      this.innerHTML = `<span class="material-symbols-outlined text-[16px]">check</span><span>Shifts Optimized</span>`;
+      setTimeout(() => {
+        this.innerHTML = originalText;
+      }, 2500);
+    }, 800);
+  });
+
+  document.getElementById('btn-export')?.addEventListener('click', function() {
+    const originalText = this.innerHTML;
+    this.innerHTML = `<span class="material-symbols-outlined text-[16px]">hourglass_empty</span><span>Generating...</span>`;
+    setTimeout(() => {
+      this.innerHTML = `<span class="material-symbols-outlined text-[16px] text-[#15803D]">download_done</span><span>Downloaded</span>`;
+      setTimeout(() => {
+        this.innerHTML = originalText;
+      }, 2000);
+    }, 600);
+  });
+</script></main></div></body></html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Resort OS — Guest Concierge</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{"primary":"#005bb2","primary-container":"#2f74ce"}}}};</script>
+<style>
+body{overscroll-behavior:none;} ::-webkit-scrollbar{display:none;}
+.typing-dot{animation:blink 1.4s infinite both;}
+.typing-dot:nth-child(2){animation-delay:.2s;}
+.typing-dot:nth-child(3){animation-delay:.4s;}
+@keyframes blink{0%,80%,100%{opacity:.3}40%{opacity:1}}
+.msg-in{animation:slideUp .3s ease-out;}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body class="min-h-screen bg-[#F7F8FA] font-['Inter'] text-[#1B2129] antialiased flex flex-col">
+
+<!-- Header -->
+<header class="bg-white border-b border-[#E4E7EB] px-6 py-4 flex items-center justify-between shrink-0 shadow-sm">
+  <div class="flex items-center gap-3">
+    <div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-white shadow-sm">
+      <span class="material-symbols-outlined text-[20px]">domain</span>
+    </div>
+    <div class="flex flex-col">
+      <span class="text-base font-bold text-[#1B2129] tracking-tight leading-tight">Resort OS</span>
+      <span class="text-[11px] font-medium text-[#7D8794] tracking-wide">Guest Concierge</span>
+    </div>
+  </div>
+  <div class="flex items-center gap-2">
+    <span class="w-2 h-2 rounded-full bg-[#3FAE6A] animate-pulse"></span>
+    <span class="text-[12px] font-medium text-[#7D8794]">AI Concierge Active</span>
+  </div>
+</header>
+
+<!-- Room Banner -->
+<div class="bg-white border-b border-[#E4E7EB] px-6 py-3 flex items-center gap-3">
+  <div class="bg-[#EAF1FC] text-primary px-3 py-1.5 rounded-lg font-['IBM_Plex_Mono'] text-sm font-semibold" id="roomBadge">Room ---</div>
+  <span class="text-sm text-[#7D8794]">Welcome! Ask our AI concierge anything about your stay.</span>
+</div>
+
+<!-- Chat Area -->
+<div class="flex-1 overflow-y-auto px-4 sm:px-8 py-6 space-y-4 max-w-3xl w-full mx-auto" id="chatArea">
+  <!-- Welcome message -->
+  <div class="msg-in flex gap-3">
+    <div class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+      <span class="material-symbols-outlined text-[18px]">smart_toy</span>
+    </div>
+    <div class="bg-white rounded-2xl rounded-tl-md px-5 py-4 shadow-sm border border-[#E4E7EB] max-w-xl">
+      <p class="text-sm text-[#1B2129] leading-relaxed">Hello! I'm your personal concierge assistant. I can help with <strong>dining reservations</strong>, <strong>spa bookings</strong>, <strong>activity recommendations</strong>, <strong>transportation</strong>, or anything else you need during your stay.</p>
+      <p class="text-sm text-[#7D8794] mt-2">Just type your request below and I'll find the best option for you.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Input Bar -->
+<div class="bg-white border-t border-[#E4E7EB] px-4 sm:px-8 py-4 shrink-0">
+  <form class="max-w-3xl mx-auto flex gap-3" id="conciergeForm">
+    <input autocomplete="off" class="flex-1 bg-[#F2F4F6] rounded-xl px-5 py-3.5 text-sm text-[#1B2129] placeholder-[#9AA2B1] focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary/30 border border-transparent focus:border-primary/40 transition-all" id="reqInput" placeholder="e.g. Can we get a quiet dinner for two tonight around 7 PM?" type="text"/>
+    <button class="bg-primary hover:bg-primary-container text-white px-5 py-3.5 rounded-xl text-sm font-semibold transition-colors shadow-sm flex items-center gap-2 shrink-0" type="submit">
+      <span>Send</span>
+      <span class="material-symbols-outlined text-[18px]">send</span>
+    </button>
+  </form>
+  <div class="max-w-3xl mx-auto mt-2 flex items-center gap-3 flex-wrap">
+    <span class="text-[11px] text-[#9AA2B1]">Quick requests:</span>
+    <button class="chip text-[12px] text-[#5A6372] bg-[#F2F4F6] hover:bg-[#E7E8EA] px-3 py-1 rounded-lg transition-colors" type="button">Dinner reservation</button>
+    <button class="chip text-[12px] text-[#5A6372] bg-[#F2F4F6] hover:bg-[#E7E8EA] px-3 py-1 rounded-lg transition-colors" type="button">Spa booking</button>
+    <button class="chip text-[12px] text-[#5A6372] bg-[#F2F4F6] hover:bg-[#E7E8EA] px-3 py-1 rounded-lg transition-colors" type="button">Late checkout</button>
+    <button class="chip text-[12px] text-[#5A6372] bg-[#F2F4F6] hover:bg-[#E7E8EA] px-3 py-1 rounded-lg transition-colors" type="button">Airport transfer</button>
+    <button class="chip text-[12px] text-[#5A6372] bg-[#F2F4F6] hover:bg-[#E7E8EA] px-3 py-1 rounded-lg transition-colors" type="button">Pool & activities</button>
+  </div>
+</div>
+
+<script>
+// Get room ID from URL
+const params=new URLSearchParams(window.location.search);
+const roomId=params.get('room')||'203';
+document.getElementById('roomBadge').textContent='Room '+roomId;
+
+// Mock concierge responses (same keyword logic as backend)
+function getConciergeResponse(text){
+  const t=text.toLowerCase();
+  if(/dinner|restaurant|eat|food|dining|italian|seafood|lunch/.test(t)){
+    return{recommendation:"We'd love to arrange that for you! We recommend Mare Nostrum Ristorante at 7:30 PM — the garden patio offers a quiet, intimate setting with dedicated sommelier service. The 7:00 PM window is quite popular tonight, so 7:30 provides a more relaxed experience with priority seating.",note:"Shall I confirm this reservation for you?"};
+  }
+  if(/spa|massage|wellness|treatment|relax|sauna|facial/.test(t)){
+    return{recommendation:"Wonderful choice! We recommend the 4:30 PM couples deep tissue massage at our Lagoon Cabana Suite. Our spa is fully staffed today and the cabana offers complete acoustic privacy with natural lagoon views before the beautiful evening lighting transition.",note:"Would you like me to book this slot?"};
+  }
+  if(/pool|swim|activity|tennis|golf|yoga|gym/.test(t)){
+    return{recommendation:"Great timing! Our infinity pool currently has reserved cabana service available. We also have a guided sunset yoga session at 5:30 PM on the Ocean Terrace (6 spots remaining), and Tennis Court 2 has a 4:00 PM slot open — our resident pro is available for a private lesson if you're interested.",note:"Which activity interests you most?"};
+  }
+  if(/checkout|late|extend|stay|departure/.test(t)){
+    return{recommendation:`We'd be happy to arrange a late checkout for Room ${roomId}! We can offer a complimentary extension until 12:30 PM. Our standard checkout is 11:00 AM, and this gives you an extra 90 minutes to enjoy your morning at a relaxed pace.`,note:"Shall I confirm the 12:30 PM late checkout?"};
+  }
+  if(/transfer|airport|car|taxi|transport|shuttle/.test(t)){
+    return{recommendation:`Absolutely! We'll arrange a private luxury hybrid shuttle for your departure from Room ${roomId}. Our concierge will coordinate bellhop assistance and luggage handling 15 minutes before your pickup time at the lobby entrance. The drive to the airport is approximately 42 minutes.`,note:"What time is your flight? I'll calculate the optimal pickup time."};
+  }
+  return{recommendation:`Thank you for your request! Our concierge team has reviewed your inquiry for Room ${roomId} and we're working on the best options for you. A personalized recommendation will be ready shortly.`,note:"Is there anything specific you'd like us to prioritize?"};
+}
+
+function addMessage(content,isUser){
+  const chat=document.getElementById('chatArea');
+  const div=document.createElement('div');
+  div.className='msg-in flex gap-3'+(isUser?' flex-row-reverse':'');
+  if(isUser){
+    div.innerHTML=`<div class="w-8 h-8 rounded-full bg-[#DDE3EE] text-[#414750] flex items-center justify-center shrink-0 mt-0.5 text-xs font-semibold">G</div>
+      <div class="bg-primary text-white rounded-2xl rounded-tr-md px-5 py-3.5 shadow-sm max-w-xl"><p class="text-sm leading-relaxed">${content}</p></div>`;
+  } else {
+    div.innerHTML=`<div class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5"><span class="material-symbols-outlined text-[18px]">smart_toy</span></div>
+      <div class="bg-white rounded-2xl rounded-tl-md px-5 py-4 shadow-sm border border-[#E4E7EB] max-w-xl"><p class="text-sm text-[#1B2129] leading-relaxed">${content.recommendation}</p>${content.note?`<p class="text-sm text-[#7D8794] mt-2 pt-2 border-t border-[#F0F2F5]">${content.note}</p>`:''}</div>`;
+  }
+  chat.appendChild(div);
+  chat.scrollTop=chat.scrollHeight;
+}
+
+function addTypingIndicator(){
+  const chat=document.getElementById('chatArea');
+  const div=document.createElement('div');
+  div.className='msg-in flex gap-3';
+  div.id='typing';
+  div.innerHTML=`<div class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5"><span class="material-symbols-outlined text-[18px]">smart_toy</span></div>
+    <div class="bg-white rounded-2xl rounded-tl-md px-5 py-4 shadow-sm border border-[#E4E7EB] flex gap-1.5"><span class="typing-dot w-2 h-2 rounded-full bg-[#9AA2B1]"></span><span class="typing-dot w-2 h-2 rounded-full bg-[#9AA2B1]"></span><span class="typing-dot w-2 h-2 rounded-full bg-[#9AA2B1]"></span></div>`;
+  chat.appendChild(div);
+  chat.scrollTop=chat.scrollHeight;
+}
+
+function removeTypingIndicator(){
+  const el=document.getElementById('typing');
+  if(el) el.remove();
+}
+
+// Form submit
+document.getElementById('conciergeForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  const input=document.getElementById('reqInput');
+  const text=input.value.trim();
+  if(!text) return;
+  addMessage(text,true);
+  input.value='';
+  addTypingIndicator();
+  setTimeout(()=>{
+    removeTypingIndicator();
+    const response=getConciergeResponse(text);
+    addMessage(response,false);
+  },800+Math.random()*600);
+});
+
+// Quick chips
+document.querySelectorAll('.chip').forEach(btn=>{
+  btn.addEventListener('click',function(){
+    const input=document.getElementById('reqInput');
+    const chipTexts={'Dinner reservation':'We would like a quiet dinner for two tonight, around 7 PM. Italian or seafood preferred.','Spa booking':'Couples massage booking for this afternoon, something tranquil around 4 or 5 PM.','Late checkout':'Could we get a late checkout tomorrow? Around 1 PM if possible.','Airport transfer':'Need airport transfer for 6:30 AM flight tomorrow, two carry-ons and one large bag.','Pool & activities':'What activities are available today? Pool, tennis, yoga — open to anything fun.'};
+    input.value=chipTexts[this.textContent]||this.textContent;
+    input.focus();
+  });
+});
+</script>
+</body>
+</html>
