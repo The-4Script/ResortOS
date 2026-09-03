@@ -13,6 +13,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, RedirectResponse
 from pydantic import BaseModel
+import pickle
+import sys
 
 # ── App Setup ───────────────────────────────────────────────────────────
 DB_PATH = os.path.join(os.path.dirname(__file__), "resort.db")
@@ -381,6 +383,187 @@ def get_dashboard():
             "staff_recommended": staff["recommended"],
             "revenue_signal_percent": max_adj,
         }
+
+
+# ── PEMS Predictive Maintenance Adapter ─────────────────────────────────
+
+# Load ML model at startup
+_pems_model = None
+_pems_feature_cols = None
+ML_DIR = os.path.join(os.path.dirname(__file__), "..", "ml")
+
+def _load_pems_model():
+    global _pems_model, _pems_feature_cols
+    model_path = os.path.join(ML_DIR, "model.pkl")
+    if os.path.exists(model_path):
+        with open(model_path, "rb") as f:
+            artifact = pickle.load(f)
+        _pems_model = artifact["model"]
+        _pems_feature_cols = artifact["feature_cols"]
+        print(f"[PEMS] Model loaded from {model_path}")
+    else:
+        print(f"[PEMS] No model found at {model_path} — prediction endpoints will return 503")
+
+# Add ml directory to path for genai_service import
+sys.path.insert(0, ML_DIR)
+try:
+    from genai_service import generate_explanation, get_top_factors
+    _genai_available = True
+except ImportError:
+    _genai_available = False
+    print("[PEMS] genai_service not available — reason strings will be generic")
+
+_load_pems_model()
+
+
+class PEMSPredictRequest(BaseModel):
+    room_id: int
+    asset_type: str
+    power_draw: float
+    usage_hours: float
+    operating_hours_since_service: int
+    error_log_count: int
+
+
+def _predict_risk(asset_type: str, power_draw: float, usage_hours: float,
+                  operating_hours_since_service: int, error_log_count: int) -> float:
+    """Run prediction through the loaded model. Returns risk probability 0-1."""
+    if _pems_model is None:
+        return None
+
+    import pandas as pd
+    row = {
+        "power_draw": power_draw,
+        "usage_hours": usage_hours,
+        "operating_hours_since_service": operating_hours_since_service,
+        "error_log_count": error_log_count,
+    }
+    # One-hot encode asset_type
+    for col in _pems_feature_cols:
+        if col.startswith("type_"):
+            row[col] = 1 if col == f"type_{asset_type}" else 0
+
+    df = pd.DataFrame([row])[_pems_feature_cols]
+    prob = _pems_model.predict_proba(df)[0][1]  # probability of failure class
+    return float(prob)
+
+
+def _risk_tier(prob: float) -> str:
+    if prob >= 0.70:
+        return "High"
+    elif prob >= 0.40:
+        return "Medium"
+    return "Low"
+
+
+@app.post("/api/pems/predict")
+async def pems_predict(req: PEMSPredictRequest):
+    """POST /pems/predict — predict risk for a single room asset."""
+    if _pems_model is None:
+        raise HTTPException(503, "PEMS model not loaded. Run ml/train.py first.")
+
+    prob = _predict_risk(
+        req.asset_type, req.power_draw, req.usage_hours,
+        req.operating_hours_since_service, req.error_log_count,
+    )
+
+    tier = _risk_tier(prob)
+    top_factors = []
+    reason = f"Risk: {prob:.0%} — {tier} priority"
+
+    if _genai_available:
+        top_factors = get_top_factors(
+            req.power_draw, req.usage_hours,
+            req.operating_hours_since_service, req.error_log_count,
+        )
+        reason = await generate_explanation(
+            req.asset_type, prob, req.power_draw, req.usage_hours,
+            req.operating_hours_since_service, req.error_log_count,
+        )
+
+    return {
+        "room_id": req.room_id,
+        "asset_type": req.asset_type,
+        "risk_probability": round(prob * 100, 1),
+        "risk_tier": tier,
+        "top_factors": top_factors,
+        "reason": reason,
+    }
+
+
+@app.post("/api/pems/scan-all")
+async def pems_scan_all():
+    """POST /pems/scan-all — re-score all assets and update DB. Auto-blocks rooms with High risk."""
+    if _pems_model is None:
+        raise HTTPException(503, "PEMS model not loaded. Run ml/train.py first.")
+
+    updated = 0
+    blocked_rooms = set()
+
+    with get_db() as conn:
+        assets = conn.execute(
+            "SELECT id, room_id, asset_type, power_draw, usage_hours, "
+            "operating_hours_since_service, error_log_count FROM assets"
+        ).fetchall()
+
+        for asset in assets:
+            a = dict(asset)
+            prob = _predict_risk(
+                a["asset_type"], a["power_draw"], a["usage_hours"],
+                a["operating_hours_since_service"], a["error_log_count"],
+            )
+            risk_pct = round(prob * 100)
+            tier = _risk_tier(prob)
+            status = "Critical" if tier == "High" else ("Warning" if tier == "Medium" else "Operational")
+
+            reason = f"Risk: {risk_pct}% — {tier} priority"
+            if _genai_available:
+                reason = await generate_explanation(
+                    a["asset_type"], prob, a["power_draw"], a["usage_hours"],
+                    a["operating_hours_since_service"], a["error_log_count"],
+                )
+
+            conn.execute(
+                "UPDATE assets SET risk_percent=?, status=?, reason=? WHERE id=?",
+                (risk_pct, status, reason, a["id"]),
+            )
+            updated += 1
+
+            if tier == "High":
+                blocked_rooms.add(a["room_id"])
+
+        # Auto-block rooms with any High-risk asset
+        for room_id in blocked_rooms:
+            conn.execute(
+                "UPDATE rooms SET status='Blocked', has_flagged_asset=1 WHERE room_id=?",
+                (room_id,),
+            )
+
+        # Un-flag rooms that no longer have high-risk assets
+        conn.execute(
+            "UPDATE rooms SET has_flagged_asset=0 WHERE room_id NOT IN "
+            f"({','.join('?' * len(blocked_rooms))})" if blocked_rooms else
+            "UPDATE rooms SET has_flagged_asset=0",
+            tuple(blocked_rooms) if blocked_rooms else (),
+        )
+
+        conn.commit()
+
+    return {
+        "assets_updated": updated,
+        "rooms_blocked": len(blocked_rooms),
+        "blocked_room_ids": sorted(blocked_rooms),
+    }
+
+
+@app.get("/api/pems/health")
+def pems_health():
+    """GET /pems/health — check if PEMS model is loaded and ready."""
+    return {
+        "model_loaded": _pems_model is not None,
+        "genai_available": _genai_available,
+        "feature_columns": _pems_feature_cols,
+    }
 
 
 # ── Static File Serving ────────────────────────────────────────────────
