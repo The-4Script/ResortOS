@@ -359,74 +359,21 @@ tailwind.config={darkMode:"class",theme:{extend:{colors:{
 
 <script>
 // ═══════════════════════════════════════════════════════════
-//  MOCK DATA (matches API contract shapes)
+//  DISPLAY CONSTANTS (no mock data — all live from API)
 // ═══════════════════════════════════════════════════════════
 const STATUS_COLORS = {Ready:'#3FAE6A',Occupied:'#3B7DD8',Dirty:'#E0A93A',Blocked:'#DD5A5A',Arrival:'#E08A3A'};
-
-// Generate 120 rooms
-const ROOM_TYPES = ['Standard','Deluxe','Deluxe AC','Suite','Penthouse'];
 const WINGS = {1:'Lobby Wing',2:'Garden Wing',3:'Ocean Wing',4:'Penthouse Wing'};
-const STATUSES_POOL = [];
-for(let i=0;i<48;i++) STATUSES_POOL.push('Occupied');
-for(let i=0;i<61;i++) STATUSES_POOL.push('Ready');
-for(let i=0;i<4;i++) STATUSES_POOL.push('Dirty');
-for(let i=0;i<4;i++) STATUSES_POOL.push('Arrival');
-for(let i=0;i<3;i++) STATUSES_POOL.push('Blocked');
-// Seeded shuffle
-function seededShuffle(arr,seed){let m=arr.length,t,i;while(m){i=Math.floor((seed=seed*16807%2147483647)/2147483647*m--);t=arr[m];arr[m]=arr[i];arr[i]=t;}return arr;}
-seededShuffle(STATUSES_POOL,42);
 
-const TYPE_POOL=[];
-[40,35,25,15,5].forEach((n,i)=>{for(let j=0;j<n;j++) TYPE_POOL.push(ROOM_TYPES[i]);});
-seededShuffle(TYPE_POOL,42);
-
-const ROOMS=[];
-let idx=0;
-for(let floor=1;floor<=4;floor++){
-  for(let num=1;num<=30;num++){
-    const rid=floor*100+num;
-    ROOMS.push({room_id:rid,floor,wing:WINGS[floor],room_type:TYPE_POOL[idx],status:STATUSES_POOL[idx],has_flagged_asset:0});
-    idx++;
-  }
-}
-// Flagged rooms
-const FLAGGED={
-  204:{assets:[
-    {asset:'AC',risk_percent:87,status:'Critical',reason:'Power spike detected + service overdue by 40 days. Compressor vibrational frequency anomaly at 10:42 AM — overheating imminent.'},
-    {asset:'TV',risk_percent:42,status:'Warning',reason:'HDMI handshake intermittent failures logged 6 times in 48h. Firmware update pending.'},
-    {asset:'Set-top box',risk_percent:8,status:'Operational',reason:'All telemetry nominal. Last firmware sync 3 days ago.'}
-  ]},
-  317:{assets:[
-    {asset:'AC',risk_percent:73,status:'Critical',reason:'Refrigerant pressure drop detected — 18% below safe threshold. Condenser coil efficiency degraded.'},
-    {asset:'TV',risk_percent:15,status:'Operational',reason:'Display panel within spec. Backlight hours: 4,200 / 60,000.'},
-    {asset:'Set-top box',risk_percent:22,status:'Operational',reason:'Minor network latency spikes during peak hours.'}
-  ]},
-  412:{assets:[
-    {asset:'AC',risk_percent:91,status:'Critical',reason:'Compressor motor current draw 34% above rated capacity. Bearing wear pattern consistent with imminent seizure.'},
-    {asset:'TV',risk_percent:5,status:'Operational',reason:'All systems nominal.'},
-    {asset:'Set-top box',risk_percent:12,status:'Operational',reason:'Firmware v3.2.1 current. No issues detected.'}
-  ]}
+// Department presentational metadata (API doesn't serve these)
+const DEPT_META = {
+  'Housekeeping':        {icon:'cleaning_services', desc:'Turnover, daily room maintenance & laundry ops',             insight:'Room turnover cycle tracking active. Monitoring housekeeping queue.'},
+  'Front Desk & Concierge': {icon:'room_service',   desc:'Guest check-in/out, lobby services, phone dispatch',          insight:'Peak arrival wave projected at 14:00. Shift coverage tracking active.'},
+  'Kitchen & Culinary':  {icon:'restaurant',         desc:'Main dining room, banquet prep & 24/7 in-room dining',       insight:'Dinner service capacity monitoring active. In-room dining queue tracked.'},
+  'Facilities & Engineering': {icon:'build',         desc:'HVAC systems, electrical plant, room maintenance dispatches', insight:'Maintenance ticket queue active. Asset faults tracked via PEMS.'},
+  'Spa & Wellness':      {icon:'spa',                desc:'Poolside cabanas, wellness center, fitness facility',         insight:'Spa appointment roster balanced. Shift coverage tracking active.'}
 };
-Object.keys(FLAGGED).forEach(rid=>{
-  const r=ROOMS.find(x=>x.room_id===+rid);
-  if(r){r.status='Blocked';r.has_flagged_asset=1;}
-});
 
-const STAFF_DEPTS=[
-  {name:'Housekeeping',current_staff:8,recommended_staff:11,gap:-3,icon:'cleaning_services',desc:'Turnover, daily room maintenance & laundry ops',insight:'Room turnover cycle delayed by ~45 min under current 94% demand. 3 rooms awaiting clean.'},
-  {name:'Front Desk & Concierge',current_staff:6,recommended_staff:6,gap:0,icon:'room_service',desc:'Guest check-in/out, lobby services, phone dispatch',insight:'Peak arrival wave projected at 14:00 (14 arrivals). Shift coverage optimal.'},
-  {name:'Kitchen & Culinary',current_staff:12,recommended_staff:15,gap:-3,icon:'restaurant',desc:'Main dining room, banquet prep & 24/7 in-room dining',insight:'Dinner rush bookings: 88 covers confirmed. In-room dining queue latency at risk.'},
-  {name:'Facilities & Engineering',current_staff:4,recommended_staff:6,gap:-2,icon:'build',desc:'HVAC systems, electrical plant, room maintenance dispatches',insight:'Room 204 critical HVAC fault assigned. 2 unassigned maintenance tickets.'},
-  {name:'Spa & Wellness',current_staff:8,recommended_staff:8,gap:0,icon:'spa',desc:'Poolside cabanas, wellness center, fitness facility',insight:'All spa appointments booked to capacity. Shift roster balanced through 20:00.'}
-];
-
-const GUEST_REQUESTS=[
-  {room_id:203,guest_name:'Sophia Jenkins',initials:'SJ',room_type:'Deluxe',request_text:'"Could we get a recommendation for a quiet dinner for two tonight? Preferably Italian or seafood, around 7:00 PM."',recommendation:'Suggest <strong class="font-semibold text-[#3B7DD8]">Mare Nostrum Ristorante at 7:30 PM</strong> — main dining kitchen is currently at peak load at 7:00 PM (88 dinner covers booked), whereas the 7:30 PM window offers optimal table turnover in the scenic garden patio with dedicated sommelier service.',status:'Pending',time:'12m ago'},
-  {room_id:301,guest_name:'David & Clara Vance',initials:'DV',room_type:'Ocean Suite',vip:true,request_text:'"Requesting extra towels and late checkout tomorrow around 1:00 PM if possible."',recommendation:'Counter-offer <strong class="font-semibold text-[#3B7DD8]">12:30 PM complimentary late checkout</strong> — Room 301 has an incoming Diamond Tier VIP arrival scheduled at 14:00 PM; a 1:00 PM departure leaves only 60 minutes and risks a ~45m housekeeping turn bottleneck.',status:'Pending',time:'28m ago'},
-  {room_id:104,guest_name:'Elena Rostova',initials:'ER',room_type:'Deluxe Garden',request_text:'"Spa booking for couples deep tissue massage this afternoon. Looking for something tranquil around 4 or 5 PM."',recommendation:'Recommend <strong class="font-semibold text-[#3B7DD8]">16:30 slot at Lagoon Cabana Suite</strong> — Spa treatment roster is fully staffed (8/8 therapists active), and the cabana offers complete acoustic privacy before evening lagoon lighting transitions.',status:'Pending',time:'45m ago'},
-  {room_id:402,guest_name:'Marcus Brody',initials:'MB',room_type:'Penthouse',request_text:'"Airport transfer arrangements for 06:30 AM flight tomorrow. Two carry-ons and one oversized surf bag."',recommendation:'Booked <strong class="font-semibold text-[#1B2129]">private luxury hybrid shuttle dispatch at 04:45 AM</strong> with bellhop escort for surf gear scheduled at 04:30 AM.',status:'Sent',time:'1h 10m ago'}
-];
-
+// Activity feed (no API endpoint — static display data)
 const ACTIVITY=[
   {time:'10:42 AM',text:'Room 204 AC flagged — <span class="text-[#DD5A5A] font-semibold">87% risk</span>',tag:'Maintenance',color:'#DD5A5A',bgColor:'#FCE8E8',icon:'settings'},
   {time:'10:35 AM',text:'Room 203 requested dinner recommendation',tag:'Guest',color:'#3B7DD8',bgColor:'#EAF1FC',icon:'chat_bubble_outline'},
@@ -435,13 +382,9 @@ const ACTIVITY=[
   {time:'08:50 AM',text:'Floor 1 morning turnover completed',tag:'Staff',color:'#3FAE6A',bgColor:'#EAF8F0',icon:'check_circle'}
 ];
 
-const REVENUE_TYPES=[
-  {room_type:'Standard',total:40,occupied:36,blocked:0,available:4,occ_pct:90,base_rate:210,adj:0,suggested:210,status:'Baseline'},
-  {room_type:'Deluxe',total:35,occupied:33,blocked:0,available:2,occ_pct:94,base_rate:275,adj:5,suggested:289,status:'Suggested +5%'},
-  {room_type:'Deluxe AC',total:25,occupied:21,blocked:3,available:1,occ_pct:96,base_rate:320,adj:12,suggested:358,status:'Suggested +12%',highlight:true},
-  {room_type:'Suite',total:15,occupied:15,blocked:0,available:0,occ_pct:100,base_rate:480,adj:0,suggested:480,status:'Sold out'},
-  {room_type:'Penthouse',total:5,occupied:4,blocked:0,available:1,occ_pct:80,base_rate:850,adj:0,suggested:850,status:'Baseline'}
-];
+// ── Live data caches (populated on fetch) ──
+let _roomsCache = [];
+let _guestRequestsCache = [];
 
 // ═══════════════════════════════════════════════════════════
 //  ROUTER
@@ -481,174 +424,224 @@ function showToast(msg){
 }
 
 // ═══════════════════════════════════════════════════════════
-//  DASHBOARD
+//  DASHBOARD (Task 3 — live from GET /api/dashboard)
 // ═══════════════════════════════════════════════════════════
-function renderDashboard(){
+async function renderDashboard(){
   const d=new Date();
   document.getElementById('dashDate').textContent=d.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
-  const occ=ROOMS.filter(r=>r.status==='Occupied').length;
-  const blocked=ROOMS.filter(r=>r.status==='Blocked').length;
-  const dirty=ROOMS.filter(r=>r.status==='Dirty').length;
-  const ready=ROOMS.filter(r=>r.status==='Ready').length;
-  const occPct=Math.round(occ/120*100);
-  const totalStaff=STAFF_DEPTS.reduce((s,d)=>s+d.current_staff,0);
-  const recStaff=STAFF_DEPTS.reduce((s,d)=>s+d.recommended_staff,0);
-  const maxAdj=Math.max(...REVENUE_TYPES.map(r=>r.adj));
-
-  const cards=[
-    {label:'Occupancy',value:occPct+'%',sub:`${occPct-3}% projected tomorrow`,border:'#3B7DD8',iconBg:'#EAF1FC',iconColor:'#3B7DD8',arrow:true},
-    {label:'Rooms needing attention',value:blocked+dirty,sub:`${blocked+dirty} rooms flagged for review`,border:'#DD5A5A',iconBg:'#FCE8E8',iconColor:'#DD5A5A',dot:true},
-    {label:'Staff status',value:`${totalStaff} / ${recStaff}`,sub:'Housekeeping on duty today',border:'#E0A93A',iconBg:'#FEF6E7',iconColor:'#E0A93A',bar:Math.round(totalStaff/recStaff*100)},
-    {label:'Revenue signal',value:`+${maxAdj}%`,sub:'Suggested rate adjustment',border:'#3FAE6A',iconBg:'#EAF8F0',iconColor:'#3FAE6A',valueColor:'#3FAE6A'}
-  ];
-
-  document.getElementById('dashCards').innerHTML=cards.map(c=>`
-    <div class="bg-white rounded-[10px] p-5 border border-[#E4E7EB] border-t-[3px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex flex-col justify-between cursor-pointer hover:shadow-md transition-shadow" style="border-top-color:${c.border}">
-      <div><div class="flex items-center justify-between"><span class="text-[13px] font-medium text-[#5A6372]">${c.label}</span><div class="w-7 h-7 rounded-full flex items-center justify-center" style="background:${c.iconBg};color:${c.iconColor}"><svg class="w-3.5 h-3.5 fill-none stroke-current stroke-2" viewBox="0 0 24 24"><path d="M3 21h18M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16M9 7h2m-2 4h2m-2 4h2m4-8h2m-2 4h2m-2 4h2" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
-      <div class="mt-3 font-['IBM_Plex_Mono'] text-[28px] font-bold tracking-tight leading-tight" style="color:${c.valueColor||'#1B2129'}">${c.value}</div></div>
-      ${c.bar?`<div class="mt-2 space-y-1.5"><div class="w-full h-1.5 bg-[#EDF1F5] rounded-full overflow-hidden"><div class="h-full bg-[${c.border}] rounded-full" style="width:${c.bar}%"></div></div><div class="text-[12px] text-[#7D8794]">${c.sub}</div></div>`
-        :`<div class="mt-3 flex items-center gap-1.5 text-[12px] text-[#7D8794]">${c.dot?`<span class="w-1.5 h-1.5 rounded-full" style="background:${c.border}"></span>`:c.arrow?`<svg class="w-3.5 h-3.5 text-[#3FAE6A] fill-none stroke-current stroke-2" viewBox="0 0 24 24"><path d="M5 10l7-7m0 0l7 7m-7-7v18" stroke-linecap="round" stroke-linejoin="round"/></svg>`:''}<span>${c.sub}</span></div>`}
+  // Show loading skeleton in stat cards
+  document.getElementById('dashCards').innerHTML=Array(4).fill('').map(()=>`
+    <div class="bg-white rounded-[10px] p-5 border border-[#E4E7EB] border-t-[3px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex flex-col justify-between animate-pulse" style="border-top-color:#E4E7EB">
+      <div><div class="h-3 w-20 bg-[#EDF1F5] rounded mb-4"></div><div class="h-8 w-16 bg-[#EDF1F5] rounded"></div></div>
+      <div class="mt-3 h-3 w-32 bg-[#EDF1F5] rounded"></div>
     </div>
   `).join('');
 
-  // Activity list
-  document.getElementById('activityList').innerHTML=ACTIVITY.map(a=>`
-    <div class="px-6 py-3.5 flex items-center justify-between hover:bg-[#F9FAFB] transition-colors gap-3 cursor-pointer">
-      <div class="flex items-center gap-3.5 min-w-0">
-        <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background:${a.bgColor};color:${a.color}"><span class="material-symbols-outlined text-[16px]">${a.icon}</span></div>
-        <span class="font-['IBM_Plex_Mono'] text-[12px] text-[#7D8794] shrink-0">${a.time}</span>
-        <p class="text-[13.5px] font-medium text-[#1B2129] truncate">${a.text}</p>
-      </div>
-      <span class="px-2.5 py-1 rounded text-[11.5px] font-semibold shrink-0 border" style="background:${a.bgColor};color:${a.color};border-color:${a.color}33">${a.tag}</span>
-    </div>
-  `).join('');
+  try {
+    const res = await fetch('/api/dashboard');
+    if (!res.ok) throw new Error(`Dashboard API ${res.status}`);
+    const data = await res.json();
 
-  // Donut
-  const total=120;
-  const segments=[{label:'Ready / Clean',count:ready,pct:Math.round(ready/total*100),color:'#3FAE6A'},{label:'Occupied',count:occ,pct:Math.round(occ/total*100),color:'#3B7DD8'},{label:'Turnover',count:dirty,pct:Math.round(dirty/total*100),color:'#E0A93A'},{label:'Maintenance',count:blocked,pct:Math.round(blocked/total*100),color:'#DD5A5A'}];
-  const circ=2*Math.PI*38;
-  let offset=0;
-  const circles=segments.map(s=>{const dash=circ*s.pct/100;const r=`<circle cx="50" cy="50" fill="transparent" r="38" stroke="${s.color}" stroke-dasharray="${dash} ${circ}" stroke-dashoffset="${-offset}" stroke-width="9"/>`;offset+=dash;return r;}).join('');
-  document.getElementById('donutWrap').innerHTML=`<svg class="w-44 h-44 -rotate-90" viewBox="0 0 100 100"><circle cx="50" cy="50" fill="transparent" r="38" stroke="#EDF1F5" stroke-width="9"/>${circles}</svg><div class="absolute flex flex-col items-center justify-center text-center pointer-events-none"><span class="font-['IBM_Plex_Mono'] text-[24px] font-bold text-[#1B2129] leading-none">${occPct}%</span><span class="text-[11px] font-medium text-[#7D8794] mt-1">Occupied</span></div>`;
-  document.getElementById('donutLegend').innerHTML=segments.map(s=>`<div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${s.color}"></span><div class="flex flex-col"><span class="text-[11.5px] text-[#7D8794] font-medium leading-none">${s.label}</span><span class="font-['IBM_Plex_Mono'] text-[13px] font-bold text-[#1B2129] mt-0.5">${s.count} <span class="text-[11px] font-normal text-[#8C95A3]">(${s.pct}%)</span></span></div></div>`).join('');
-}
+    const occPct = Math.round(data.occupancy_percent);
+    const occ = data.occupied;
+    const blocked = data.blocked;
+    const dirty = data.dirty;
+    const ready = data.ready;
+    const totalRooms = data.total_rooms;
 
-// ═══════════════════════════════════════════════════════════
-//  ROOM OPS
-// ═══════════════════════════════════════════════════════════
-function renderRoomOps(){
-  let html='';
-  for(let floor=1;floor<=4;floor++){
-    const floorRooms=ROOMS.filter(r=>r.floor===floor);
-    const flagged=floorRooms.filter(r=>r.has_flagged_asset).length;
-    html+=`<div>
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="text-xs font-bold text-[#7D8794] uppercase tracking-wider">Level 0${floor} — ${WINGS[floor]}</h3>
-        ${flagged?`<span class="text-xs text-[#DD5A5A] font-medium">${flagged} Critical Flag${flagged>1?'s':''}</span>`:`<span class="text-xs text-[#7D8794]">${floorRooms.length} Rooms</span>`}
-      </div>
-      <div class="grid grid-cols-6 xl:grid-cols-10 gap-3">
-        ${floorRooms.map(r=>{
-          const isFlagged=r.has_flagged_asset;
-          const color=STATUS_COLORS[r.status]||'#7D8794';
-          return `<div class="room-cell bg-white border ${isFlagged?'border-2 border-[#DD5A5A] bg-red-50/50':'border-[#E4E7EB]'} p-3.5 rounded-lg shadow-sm" onclick="openDrawer(${r.room_id})">
-            <div class="flex items-center justify-between">
-              <span class="font-['IBM_Plex_Mono'] text-sm font-bold ${isFlagged?'text-[#DD5A5A]':'text-[#1B2129]'}">${r.room_id}</span>
-              ${isFlagged?'<span class="text-[10px] font-bold uppercase bg-[#DD5A5A] text-white px-1.5 py-0.5 rounded">Fault</span>':''}
-            </div>
-            <div class="mt-2 flex items-center justify-between text-[11px]">
-              <span class="${isFlagged?'text-[#DD5A5A] font-medium':'text-[#7D8794]'}">${r.room_type}</span>
-              <span class="inline-block w-2 h-2 rounded-full ${isFlagged?'animate-pulse':''}" style="background:${color}"></span>
-            </div>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>`;
-  }
-  document.getElementById('roomGrid').innerHTML=html;
-}
+    const cards=[
+      {label:'Occupancy',value:occPct+'%',sub:`${Math.max(0,occPct-3)}% projected tomorrow`,border:'#3B7DD8',iconBg:'#EAF1FC',iconColor:'#3B7DD8',arrow:true},
+      {label:'Rooms needing attention',value:data.rooms_needing_attention,sub:`${data.rooms_needing_attention} rooms flagged for review`,border:'#DD5A5A',iconBg:'#FCE8E8',iconColor:'#DD5A5A',dot:true},
+      {label:'Staff status',value:`${data.staff_current} / ${data.staff_recommended}`,sub:'Housekeeping on duty today',border:'#E0A93A',iconBg:'#FEF6E7',iconColor:'#E0A93A',bar:Math.round(data.staff_current/data.staff_recommended*100)},
+      {label:'Revenue signal',value:`+${data.revenue_signal_percent}%`,sub:'Suggested rate adjustment',border:'#3FAE6A',iconBg:'#EAF8F0',iconColor:'#3FAE6A',valueColor:'#3FAE6A'}
+    ];
 
-function openDrawer(roomId){
-  const room=ROOMS.find(r=>r.room_id===roomId);
-  if(!room) return;
-  const assets=FLAGGED[roomId]?FLAGGED[roomId].assets:[
-    {asset:'AC',risk_percent:Math.floor(Math.random()*20+3),status:'Operational',reason:'Routine operation. All telemetry nominal.'},
-    {asset:'TV',risk_percent:Math.floor(Math.random()*15+2),status:'Operational',reason:'Display panel within spec.'},
-    {asset:'Set-top box',risk_percent:Math.floor(Math.random()*10+1),status:'Operational',reason:'Firmware current. No issues.'}
-  ];
-  const isBlocked=room.status==='Blocked';
+    document.getElementById('dashCards').innerHTML=cards.map(c=>`
+      <div class="bg-white rounded-[10px] p-5 border border-[#E4E7EB] border-t-[3px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex flex-col justify-between cursor-pointer hover:shadow-md transition-shadow" style="border-top-color:${c.border}">
+        <div><div class="flex items-center justify-between"><span class="text-[13px] font-medium text-[#5A6372]">${c.label}</span><div class="w-7 h-7 rounded-full flex items-center justify-center" style="background:${c.iconBg};color:${c.iconColor}"><svg class="w-3.5 h-3.5 fill-none stroke-current stroke-2" viewBox="0 0 24 24"><path d="M3 21h18M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16M9 7h2m-2 4h2m-2 4h2m4-8h2m-2 4h2m-2 4h2" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+        <div class="mt-3 font-['IBM_Plex_Mono'] text-[28px] font-bold tracking-tight leading-tight" style="color:${c.valueColor||'#1B2129'}">${c.value}</div></div>
+        ${c.bar?`<div class="mt-2 space-y-1.5"><div class="w-full h-1.5 bg-[#EDF1F5] rounded-full overflow-hidden"><div class="h-full bg-[${c.border}] rounded-full" style="width:${c.bar}%"></div></div><div class="text-[12px] text-[#7D8794]">${c.sub}</div></div>`
+          :`<div class="mt-3 flex items-center gap-1.5 text-[12px] text-[#7D8794]">${c.dot?`<span class="w-1.5 h-1.5 rounded-full" style="background:${c.border}"></span>`:c.arrow?`<svg class="w-3.5 h-3.5 text-[#3FAE6A] fill-none stroke-current stroke-2" viewBox="0 0 24 24"><path d="M5 10l7-7m0 0l7 7m-7-7v18" stroke-linecap="round" stroke-linejoin="round"/></svg>`:''}<span>${c.sub}</span></div>`}
+      </div>
+    `).join('');
 
-  function riskColor(pct){return pct>=70?'#DD5A5A':pct>=30?'#E0A93A':'#3FAE6A';}
-  function riskLabel(pct){return pct>=70?'High Risk':pct>=30?'Moderate':'Optimal';}
-  function riskBg(pct){return pct>=70?'#fee2e2':pct>=30?'#fef3c7':'#dcfce7';}
-
-  document.getElementById('drawerContent').innerHTML=`
-    <header class="p-6 border-b border-gray-100 flex items-center justify-between shrink-0 bg-white">
-      <div class="flex items-center gap-3">
-        <span class="font-['IBM_Plex_Mono'] text-3xl font-bold text-[#1B2129] tracking-tight">${room.room_id}</span>
-        <div class="bg-gray-100 text-[#5A6372] text-xs font-semibold px-2.5 py-1 rounded-md border border-gray-200/60">${room.room_type}</div>
-      </div>
-      <div class="flex items-center gap-3">
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold" style="background:${STATUS_COLORS[room.status]}20;color:${STATUS_COLORS[room.status]};border:1px solid ${STATUS_COLORS[room.status]}40">
-          <span class="w-2 h-2 rounded-full" style="background:${STATUS_COLORS[room.status]}"></span>${room.status}
-        </span>
-        <button onclick="closeDrawer()" class="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-2 rounded-full transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
-      </div>
-    </header>
-    <div class="flex-1 overflow-y-auto pb-6" style="max-height:calc(100vh - 180px)">
-      ${isBlocked?`<div class="mx-6 mt-5 p-3.5 rounded-lg bg-red-50/90 border-l-4 border-[#DD5A5A] flex items-start gap-3">
-        <div class="p-1 rounded-full bg-red-100 text-[#DD5A5A] shrink-0 mt-0.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></div>
-        <div><h4 class="text-sm font-semibold text-red-900">Excluded from allocation</h4><p class="text-xs text-red-700/90 mt-0.5">Automated lock due to critical asset fault. Front desk booking disabled.</p></div>
-      </div>`:''}
-      <div class="grid grid-cols-3 gap-2.5 mx-6 mt-4">
-        <div class="p-3 rounded-lg border border-[#E4E7EB] bg-[#F7F8FA]"><span class="text-[11px] font-medium text-[#7D8794] block">Wing / Floor</span><span class="text-xs font-bold text-[#1B2129] mt-1 block">L0${room.floor} ${room.wing.split(' ')[0]}</span></div>
-        <div class="p-3 rounded-lg border border-[#E4E7EB] bg-[#F7F8FA]"><span class="text-[11px] font-medium text-[#7D8794] block">Status</span><span class="text-xs font-bold mt-1 block" style="color:${STATUS_COLORS[room.status]}">${room.status}</span></div>
-        <div class="p-3 rounded-lg border border-[#E4E7EB] bg-[#F7F8FA]"><span class="text-[11px] font-medium text-[#7D8794] block">Asset Risk</span><span class="text-xs font-bold mt-1 block" style="color:${riskColor(Math.max(...assets.map(a=>a.risk_percent)))}">${isBlocked?'Priority 1':'Normal'}</span></div>
-      </div>
-      <div class="mx-6 mt-6">
-        <div class="flex items-center justify-between mb-3">
-          <div class="flex items-center gap-2"><h4 class="text-xs font-bold text-[#1B2129] uppercase tracking-wider">Asset health telemetry</h4><span class="relative flex h-2 w-2"><span class="animate-ping absolute h-full w-full rounded-full bg-[#3FAE6A] opacity-75"></span><span class="relative rounded-full h-2 w-2 bg-[#3FAE6A]"></span></span></div>
-          <span class="text-xs font-['IBM_Plex_Mono'] text-[#7D8794]">${assets.length} monitored</span>
+    // Activity list (static — no API)
+    document.getElementById('activityList').innerHTML=ACTIVITY.map(a=>`
+      <div class="px-6 py-3.5 flex items-center justify-between hover:bg-[#F9FAFB] transition-colors gap-3 cursor-pointer">
+        <div class="flex items-center gap-3.5 min-w-0">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background:${a.bgColor};color:${a.color}"><span class="material-symbols-outlined text-[16px]">${a.icon}</span></div>
+          <span class="font-['IBM_Plex_Mono'] text-[12px] text-[#7D8794] shrink-0">${a.time}</span>
+          <p class="text-[13.5px] font-medium text-[#1B2129] truncate">${a.text}</p>
         </div>
-        <div class="space-y-3">
-          ${assets.map(a=>{
-            const c=riskColor(a.risk_percent);const bg=riskBg(a.risk_percent);
-            const circumference=2*Math.PI*12;const dashoffset=circumference*(1-a.risk_percent/100);
-            return `<div class="p-3.5 rounded-xl border ${a.risk_percent>=70?'border-2 border-red-200':'border-[#E4E7EB]'} bg-white shadow-sm">
+        <span class="px-2.5 py-1 rounded text-[11.5px] font-semibold shrink-0 border" style="background:${a.bgColor};color:${a.color};border-color:${a.color}33">${a.tag}</span>
+      </div>
+    `).join('');
+
+    // Donut chart
+    const segments=[
+      {label:'Ready / Clean',count:ready,pct:Math.round(ready/totalRooms*100),color:'#3FAE6A'},
+      {label:'Occupied',count:occ,pct:Math.round(occ/totalRooms*100),color:'#3B7DD8'},
+      {label:'Turnover',count:dirty,pct:Math.round(dirty/totalRooms*100),color:'#E0A93A'},
+      {label:'Maintenance',count:blocked,pct:Math.round(blocked/totalRooms*100),color:'#DD5A5A'}
+    ];
+    const circ=2*Math.PI*38;
+    let offset=0;
+    const circles=segments.map(s=>{const dash=circ*s.pct/100;const r=`<circle cx="50" cy="50" fill="transparent" r="38" stroke="${s.color}" stroke-dasharray="${dash} ${circ}" stroke-dashoffset="${-offset}" stroke-width="9"/>`;offset+=dash;return r;}).join('');
+    document.getElementById('donutWrap').innerHTML=`<svg class="w-44 h-44 -rotate-90" viewBox="0 0 100 100"><circle cx="50" cy="50" fill="transparent" r="38" stroke="#EDF1F5" stroke-width="9"/>${circles}</svg><div class="absolute flex flex-col items-center justify-center text-center pointer-events-none"><span class="font-['IBM_Plex_Mono'] text-[24px] font-bold text-[#1B2129] leading-none">${occPct}%</span><span class="text-[11px] font-medium text-[#7D8794] mt-1">Occupied</span></div>`;
+    document.getElementById('donutLegend').innerHTML=segments.map(s=>`<div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${s.color}"></span><div class="flex flex-col"><span class="text-[11.5px] text-[#7D8794] font-medium leading-none">${s.label}</span><span class="font-['IBM_Plex_Mono'] text-[13px] font-bold text-[#1B2129] mt-0.5">${s.count} <span class="text-[11px] font-normal text-[#8C95A3]">(${s.pct}%)</span></span></div></div>`).join('');
+
+  } catch(err) {
+    console.error('Dashboard fetch failed:', err);
+    document.getElementById('dashCards').innerHTML=`<div class="col-span-4 text-center py-8 text-[#DD5A5A] text-sm font-medium">Failed to load dashboard data. Check backend connection.</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ROOM OPS (Task 4 — live from GET /api/rooms + /api/rooms/{id})
+// ═══════════════════════════════════════════════════════════
+async function renderRoomOps(){
+  document.getElementById('roomGrid').innerHTML=`<div class="text-center py-12 text-[#7D8794] text-sm animate-pulse">Loading room grid…</div>`;
+
+  try {
+    const res = await fetch('/api/rooms');
+    if (!res.ok) throw new Error(`Rooms API ${res.status}`);
+    _roomsCache = await res.json();
+
+    let html='';
+    for(let floor=1;floor<=4;floor++){
+      const floorRooms=_roomsCache.filter(r=>r.floor===floor);
+      const flagged=floorRooms.filter(r=>r.has_flagged_asset).length;
+      html+=`<div>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-xs font-bold text-[#7D8794] uppercase tracking-wider">Level 0${floor} — ${WINGS[floor]||'Wing '+floor}</h3>
+          ${flagged?`<span class="text-xs text-[#DD5A5A] font-medium">${flagged} Critical Flag${flagged>1?'s':''}</span>`:`<span class="text-xs text-[#7D8794]">${floorRooms.length} Rooms</span>`}
+        </div>
+        <div class="grid grid-cols-6 xl:grid-cols-10 gap-3">
+          ${floorRooms.map(r=>{
+            const isFlagged=r.has_flagged_asset;
+            const color=STATUS_COLORS[r.status]||'#7D8794';
+            return `<div class="room-cell bg-white border ${isFlagged?'border-2 border-[#DD5A5A] bg-red-50/50':'border-[#E4E7EB]'} p-3.5 rounded-lg shadow-sm" onclick="openDrawer(${r.room_id})">
               <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-lg flex items-center justify-center border" style="background:${bg};color:${c};border-color:${c}30">
-                    <span class="material-symbols-outlined text-[20px]">${a.asset==='AC'?'ac_unit':a.asset==='TV'?'tv':'router'}</span>
-                  </div>
-                  <div><h5 class="text-sm font-semibold text-[#1B2129]">${a.asset}</h5><p class="text-xs text-[#7D8794] font-['IBM_Plex_Mono'] mt-0.5">${a.status}</p></div>
-                </div>
-                <div class="flex items-center gap-2.5">
-                  <div class="relative w-8 h-8 flex items-center justify-center">
-                    <svg class="w-8 h-8 -rotate-90" viewBox="0 0 32 32"><circle cx="16" cy="16" fill="none" r="12" stroke="${bg}" stroke-width="3"/><circle cx="16" cy="16" fill="none" r="12" stroke="${c}" stroke-dasharray="${circumference}" stroke-dashoffset="${dashoffset}" stroke-linecap="round" stroke-width="3"/></svg>
-                  </div>
-                  <div class="text-right"><span class="font-['IBM_Plex_Mono'] text-sm font-bold block leading-none" style="color:${c}">${a.risk_percent}%</span><span class="text-[10px] font-bold uppercase" style="color:${c}">${riskLabel(a.risk_percent)}</span></div>
-                </div>
+                <span class="font-['IBM_Plex_Mono'] text-sm font-bold ${isFlagged?'text-[#DD5A5A]':'text-[#1B2129]'}">${r.room_id}</span>
+                ${isFlagged?'<span class="text-[10px] font-bold uppercase bg-[#DD5A5A] text-white px-1.5 py-0.5 rounded">Fault</span>':''}
               </div>
-              ${a.risk_percent>=40?`<div class="mt-3 p-3 rounded-lg flex items-start gap-2.5 border" style="background:${bg};border-color:${c}30">
-                <svg class="w-4 h-4 shrink-0 mt-0.5" style="color:${c}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
-                <p class="text-xs" style="color:${c}">${a.reason}</p>
-              </div>`:''}
+              <div class="mt-2 flex items-center justify-between text-[11px]">
+                <span class="${isFlagged?'text-[#DD5A5A] font-medium':'text-[#7D8794]'}">${r.room_type}</span>
+                <span class="inline-block w-2 h-2 rounded-full ${isFlagged?'animate-pulse':''}" style="background:${color}"></span>
+              </div>
             </div>`;
           }).join('')}
         </div>
-      </div>
-    </div>
-    <footer class="p-5 border-t border-[#E4E7EB] bg-white flex items-center gap-3 shrink-0">
-      <button class="flex-1 py-2.5 px-4 rounded-lg border border-gray-300 hover:bg-gray-50 text-[#5A6372] font-semibold text-xs transition-colors flex items-center justify-center gap-1.5" onclick="showToast('Technician assignment sent')">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>Assign technician
-      </button>
-      <button class="flex-1 py-2.5 px-4 rounded-lg bg-[#3B7DD8] hover:bg-[#2C6EC9] text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm" onclick="markResolved(${room.room_id})">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>Mark resolved
-      </button>
-    </footer>`;
+      </div>`;
+    }
+    document.getElementById('roomGrid').innerHTML=html;
 
+  } catch(err) {
+    console.error('Room grid fetch failed:', err);
+    document.getElementById('roomGrid').innerHTML=`<div class="text-center py-8 text-[#DD5A5A] text-sm font-medium">Failed to load rooms. Check backend connection.</div>`;
+  }
+}
+
+async function openDrawer(roomId){
+  // Show loading state in drawer
+  document.getElementById('drawerContent').innerHTML=`
+    <div class="p-6 flex items-center justify-between border-b border-gray-100 bg-white">
+      <span class="font-['IBM_Plex_Mono'] text-3xl font-bold text-[#1B2129] tracking-tight">${roomId}</span>
+      <button onclick="closeDrawer()" class="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-2 rounded-full transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+    </div>
+    <div class="flex-1 flex items-center justify-center py-12 text-[#7D8794] text-sm animate-pulse">Loading room details…</div>`;
   document.getElementById('drawerBackdrop').classList.add('open');
   document.getElementById('drawerPanel').classList.add('open');
+
+  try {
+    const res = await fetch(`/api/rooms/${roomId}`);
+    if (!res.ok) throw new Error(`Room detail API ${res.status}`);
+    const room = await res.json();
+    const assets = room.assets || [];
+    const isBlocked = room.status === 'Blocked';
+
+    function riskColor(pct){return pct>=70?'#DD5A5A':pct>=30?'#E0A93A':'#3FAE6A';}
+    function riskLabel(pct){return pct>=70?'High Risk':pct>=30?'Moderate':'Optimal';}
+    function riskBg(pct){return pct>=70?'#fee2e2':pct>=30?'#fef3c7':'#dcfce7';}
+
+    document.getElementById('drawerContent').innerHTML=`
+      <header class="p-6 border-b border-gray-100 flex items-center justify-between shrink-0 bg-white">
+        <div class="flex items-center gap-3">
+          <span class="font-['IBM_Plex_Mono'] text-3xl font-bold text-[#1B2129] tracking-tight">${room.room_id}</span>
+          <div class="bg-gray-100 text-[#5A6372] text-xs font-semibold px-2.5 py-1 rounded-md border border-gray-200/60">${room.room_type}</div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold" style="background:${STATUS_COLORS[room.status]}20;color:${STATUS_COLORS[room.status]};border:1px solid ${STATUS_COLORS[room.status]}40">
+            <span class="w-2 h-2 rounded-full" style="background:${STATUS_COLORS[room.status]}"></span>${room.status}
+          </span>
+          <button onclick="closeDrawer()" class="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-2 rounded-full transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+        </div>
+      </header>
+      <div class="flex-1 overflow-y-auto pb-6" style="max-height:calc(100vh - 180px)">
+        ${isBlocked?`<div class="mx-6 mt-5 p-3.5 rounded-lg bg-red-50/90 border-l-4 border-[#DD5A5A] flex items-start gap-3">
+          <div class="p-1 rounded-full bg-red-100 text-[#DD5A5A] shrink-0 mt-0.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></div>
+          <div><h4 class="text-sm font-semibold text-red-900">Excluded from allocation</h4><p class="text-xs text-red-700/90 mt-0.5">Automated lock due to critical asset fault. Front desk booking disabled.</p></div>
+        </div>`:''}
+        <div class="grid grid-cols-3 gap-2.5 mx-6 mt-4">
+          <div class="p-3 rounded-lg border border-[#E4E7EB] bg-[#F7F8FA]"><span class="text-[11px] font-medium text-[#7D8794] block">Wing / Floor</span><span class="text-xs font-bold text-[#1B2129] mt-1 block">L0${room.floor} ${(room.wing||'').split(' ')[0]}</span></div>
+          <div class="p-3 rounded-lg border border-[#E4E7EB] bg-[#F7F8FA]"><span class="text-[11px] font-medium text-[#7D8794] block">Status</span><span class="text-xs font-bold mt-1 block" style="color:${STATUS_COLORS[room.status]}">${room.status}</span></div>
+          <div class="p-3 rounded-lg border border-[#E4E7EB] bg-[#F7F8FA]"><span class="text-[11px] font-medium text-[#7D8794] block">Asset Risk</span><span class="text-xs font-bold mt-1 block" style="color:${riskColor(Math.max(...assets.map(a=>a.risk_percent),0))}">${isBlocked?'Priority 1':'Normal'}</span></div>
+        </div>
+        <div class="mx-6 mt-6">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2"><h4 class="text-xs font-bold text-[#1B2129] uppercase tracking-wider">Asset health telemetry</h4><span class="relative flex h-2 w-2"><span class="animate-ping absolute h-full w-full rounded-full bg-[#3FAE6A] opacity-75"></span><span class="relative rounded-full h-2 w-2 bg-[#3FAE6A]"></span></span></div>
+            <span class="text-xs font-['IBM_Plex_Mono'] text-[#7D8794]">${assets.length} monitored</span>
+          </div>
+          <div class="space-y-3">
+            ${assets.map(a=>{
+              const riskColor = r => r>=70 ? '#DD5A5A' : r>=40 ? '#E0A93A' : '#3FAE6A';
+              const riskBg = r => r>=70 ? '#FCE8E8' : r>=40 ? '#FEF6E7' : '#EAF8F0';
+              const riskLabel = r => r>=70 ? 'Critical' : r>=40 ? 'Warning' : 'Normal';
+              const c=riskColor(a.risk_percent);const bg=riskBg(a.risk_percent);
+              const circumference=2*Math.PI*12;const dashoffset=circumference*(1-a.risk_percent/100);
+              return `<div class="p-3.5 rounded-xl border ${a.risk_percent>=70?'border-2 border-red-200':'border-[#E4E7EB]'} bg-white shadow-sm">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center border" style="background:${bg};color:${c};border-color:${c}30">
+                      <span class="material-symbols-outlined text-[20px]">${a.asset==='AC'?'ac_unit':a.asset==='TV'?'tv':'router'}</span>
+                    </div>
+                    <div><h5 class="text-sm font-semibold text-[#1B2129]">${a.asset}</h5><p class="text-xs text-[#7D8794] font-['IBM_Plex_Mono'] mt-0.5">${a.status}</p></div>
+                  </div>
+                  <div class="flex items-center gap-2.5">
+                    <div class="relative w-8 h-8 flex items-center justify-center">
+                      <svg class="w-8 h-8 -rotate-90" viewBox="0 0 32 32"><circle cx="16" cy="16" fill="none" r="12" stroke="${bg}" stroke-width="3"/><circle cx="16" cy="16" fill="none" r="12" stroke="${c}" stroke-dasharray="${circumference}" stroke-dashoffset="${dashoffset}" stroke-linecap="round" stroke-width="3"/></svg>
+                    </div>
+                    <div class="text-right"><span class="font-['IBM_Plex_Mono'] text-sm font-bold block leading-none" style="color:${c}">${a.risk_percent}%</span><span class="text-[10px] font-bold uppercase" style="color:${c}">${riskLabel(a.risk_percent)}</span></div>
+                  </div>
+                </div>
+                ${a.risk_percent>=40?`<div class="mt-3 p-3 rounded-lg flex items-start gap-2.5 border" style="background:${bg};border-color:${c}30">
+                  <svg class="w-4 h-4 shrink-0 mt-0.5" style="color:${c}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                  <p class="text-xs" style="color:${c}">${a.reason}</p>
+                </div>`:''}
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+      <footer class="p-5 border-t border-[#E4E7EB] bg-white flex items-center gap-3 shrink-0">
+        <button class="flex-1 py-2.5 px-4 rounded-lg border border-gray-300 hover:bg-gray-50 text-[#5A6372] font-semibold text-xs transition-colors flex items-center justify-center gap-1.5" onclick="showToast('Technician assignment sent')">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>Assign technician
+        </button>
+        <button class="flex-1 py-2.5 px-4 rounded-lg bg-[#3B7DD8] hover:bg-[#2C6EC9] text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm" onclick="markResolved(${room.room_id})">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>Mark resolved
+        </button>
+      </footer>`;
+
+  } catch(err) {
+    console.error('Room detail fetch failed:', err);
+    document.getElementById('drawerContent').innerHTML=`
+      <div class="p-6 flex items-center justify-between border-b border-gray-100 bg-white">
+        <span class="font-['IBM_Plex_Mono'] text-3xl font-bold text-[#1B2129]">${roomId}</span>
+        <button onclick="closeDrawer()" class="text-gray-400 hover:text-gray-700 p-2 rounded-full"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+      </div>
+      <div class="flex-1 flex items-center justify-center py-12 text-[#DD5A5A] text-sm">Failed to load room details.</div>`;
+  }
 }
 
 function closeDrawer(){
@@ -657,120 +650,156 @@ function closeDrawer(){
 }
 
 function markResolved(roomId){
-  const room=ROOMS.find(r=>r.room_id===roomId);
-  if(room){room.status='Ready';room.has_flagged_asset=0;delete FLAGGED[roomId];}
-  closeDrawer();renderRoomOps();renderDashboard();
+  // Frontend-only visual state change (no backend persistence)
+  const room = _roomsCache.find(r=>r.room_id===roomId);
+  if(room){room.status='Ready';room.has_flagged_asset=0;}
+  closeDrawer();
+  renderRoomOps();
+  renderDashboard();
   showToast(`Room ${roomId} marked as resolved`);
 }
 
 // ═══════════════════════════════════════════════════════════
-//  STAFF
+//  STAFF (Task 5a — live from GET /api/staff)
 // ═══════════════════════════════════════════════════════════
-function renderStaff(){
-  const totalCurrent=STAFF_DEPTS.reduce((s,d)=>s+d.current_staff,0);
-  const totalRec=STAFF_DEPTS.reduce((s,d)=>s+d.recommended_staff,0);
-  const deficit=totalCurrent-totalRec;
-  document.getElementById('staffTotal').textContent=`${totalCurrent} / ${totalRec} active`;
-  document.getElementById('staffDeficit').textContent=`Overall deficit: ${deficit}`;
+async function renderStaff(){
+  document.getElementById('staffCards').innerHTML=`<div class="text-center py-12 text-[#7D8794] text-sm animate-pulse">Loading staff allocations…</div>`;
 
-  document.getElementById('staffCards').innerHTML=STAFF_DEPTS.map(d=>{
-    const pct=Math.round(d.current_staff/d.recommended_staff*100);
-    const isOk=d.gap>=0;
-    const color=isOk?'#3FAE6A':'#E0A93A';
-    const iconBg=isOk?'#DCFCE7':'#FEF3C7';
-    const iconColor=isOk?'#15803D':'#B45309';
-    return `<article class="w-full bg-white rounded-xl shadow-sm border-t-[3px] p-6 hover:shadow-md transition-all" style="border-top-color:${color}">
-      <div class="flex flex-col gap-4">
-        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-          <div class="flex items-start gap-4">
-            <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style="background:${iconBg};color:${iconColor}"><span class="material-symbols-outlined text-[20px]">${d.icon}</span></div>
-            <div>
-              <div class="flex items-center gap-2">
-                <h3 class="text-base font-semibold text-[#1B2129]">${d.name}</h3>
-                <span class="px-2 py-0.5 rounded-full text-[11px] font-medium" style="background:${iconBg};color:${iconColor}">${isOk?'Fully staffed':`Gap: ${Math.abs(d.gap)} staff`}</span>
+  try {
+    const res = await fetch('/api/staff');
+    if (!res.ok) throw new Error(`Staff API ${res.status}`);
+    const data = await res.json();
+
+    const depts = data.departments;
+    const totalCurrent = depts.reduce((s,d)=>s+d.current_staff,0);
+    const totalRec = depts.reduce((s,d)=>s+d.recommended_staff,0);
+    const deficit = totalCurrent - totalRec;
+
+    document.getElementById('staffOccupancy').textContent = Math.round(data.occupancy_percent) + '%';
+    document.getElementById('staffTotal').textContent = `${totalCurrent} / ${totalRec} active`;
+    document.getElementById('staffDeficit').textContent = `Overall deficit: ${deficit}`;
+
+    document.getElementById('staffCards').innerHTML = depts.map(d=>{
+      const meta = DEPT_META[d.name] || {icon:'work', desc:'Department operations', insight:'Monitoring active.'};
+      const pct = Math.round(d.current_staff/d.recommended_staff*100);
+      const isOk = d.gap >= 0;
+      const color = isOk ? '#3FAE6A' : '#E0A93A';
+      const iconBg = isOk ? '#DCFCE7' : '#FEF3C7';
+      const iconColor = isOk ? '#15803D' : '#B45309';
+      return `<article class="w-full bg-white rounded-xl shadow-sm border-t-[3px] p-6 hover:shadow-md transition-all" style="border-top-color:${color}">
+        <div class="flex flex-col gap-4">
+          <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div class="flex items-start gap-4">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style="background:${iconBg};color:${iconColor}"><span class="material-symbols-outlined text-[20px]">${meta.icon}</span></div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="text-base font-semibold text-[#1B2129]">${d.name}</h3>
+                  <span class="px-2 py-0.5 rounded-full text-[11px] font-medium" style="background:${iconBg};color:${iconColor}">${isOk?'Fully staffed':`Gap: ${Math.abs(d.gap)} staff`}</span>
+                </div>
+                <p class="text-[13px] text-[#7D8794] mt-0.5">${meta.desc}</p>
               </div>
-              <p class="text-[13px] text-[#7D8794] mt-0.5">${d.desc}</p>
+            </div>
+            <div class="flex flex-col sm:items-end">
+              <div class="flex items-baseline gap-1.5"><span class="font-['IBM_Plex_Mono'] text-2xl font-medium text-[#1B2129]">${d.current_staff}</span><span class="font-['IBM_Plex_Mono'] text-sm text-[#9AA2B1]">/</span><span class="font-['IBM_Plex_Mono'] text-2xl font-medium text-[#7D8794]">${d.recommended_staff}</span></div>
+              <span class="text-[11px] text-[#7D8794]">On duty / Recommended</span>
             </div>
           </div>
-          <div class="flex flex-col sm:items-end">
-            <div class="flex items-baseline gap-1.5"><span class="font-['IBM_Plex_Mono'] text-2xl font-medium text-[#1B2129]">${d.current_staff}</span><span class="font-['IBM_Plex_Mono'] text-sm text-[#9AA2B1]">/</span><span class="font-['IBM_Plex_Mono'] text-2xl font-medium text-[#7D8794]">${d.recommended_staff}</span></div>
-            <span class="text-[11px] text-[#7D8794]">On duty / Recommended</span>
+          <div class="w-full flex flex-col gap-1.5">
+            <div class="w-full h-2 rounded-full bg-[#EDF1F5] overflow-hidden"><div class="h-full rounded-full transition-all duration-500" style="width:${pct}%;background:${color}"></div></div>
+            <div class="flex justify-between text-[11px] text-[#7D8794]"><span>${pct}% coverage</span><span>${isOk?'Capacity stable':`-${Math.abs(d.gap)} headcount deficit`}</span></div>
+          </div>
+          <div class="pt-3 border-t border-[#E4E7EB] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[18px] shrink-0" style="color:${iconColor}">${isOk?'check_circle':'warning'}</span>
+              <span class="text-[13px] text-[#7D8794]">${meta.insight}</span>
+            </div>
+            <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+              ${!isOk?`<button class="h-8 px-3 rounded-lg border border-[#E4E7EB] bg-white text-xs font-semibold text-[#1B2129] hover:bg-[#F5F7FA] transition-colors" onclick="showToast('Reassignment initiated')">Reassign</button>
+              <button class="h-8 px-3 rounded-lg text-white text-xs font-semibold hover:opacity-90 transition-opacity" style="background:${color}" onclick="showToast('Backup pool notified')">Call backup pool</button>`
+              :`<button class="h-8 px-3 rounded-lg border border-[#E4E7EB] bg-white text-xs font-semibold text-[#1B2129] hover:bg-[#F5F7FA] transition-colors" onclick="showToast('Roster opened')">View roster</button>`}
+            </div>
           </div>
         </div>
-        <div class="w-full flex flex-col gap-1.5">
-          <div class="w-full h-2 rounded-full bg-[#EDF1F5] overflow-hidden"><div class="h-full rounded-full transition-all duration-500" style="width:${pct}%;background:${color}"></div></div>
-          <div class="flex justify-between text-[11px] text-[#7D8794]"><span>${pct}% coverage</span><span>${isOk?'Capacity stable':`-${Math.abs(d.gap)} headcount deficit`}</span></div>
-        </div>
-        <div class="pt-3 border-t border-[#E4E7EB] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-[18px] shrink-0" style="color:${iconColor}">${isOk?'check_circle':'warning'}</span>
-            <span class="text-[13px] text-[#7D8794]">${d.insight}</span>
-          </div>
-          <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-            ${!isOk?`<button class="h-8 px-3 rounded-lg border border-[#E4E7EB] bg-white text-xs font-semibold text-[#1B2129] hover:bg-[#F5F7FA] transition-colors" onclick="showToast('Reassignment initiated')">Reassign</button>
-            <button class="h-8 px-3 rounded-lg text-white text-xs font-semibold hover:opacity-90 transition-opacity" style="background:${color}" onclick="showToast('Backup pool notified')">Call backup pool</button>`
-            :`<button class="h-8 px-3 rounded-lg border border-[#E4E7EB] bg-white text-xs font-semibold text-[#1B2129] hover:bg-[#F5F7FA] transition-colors" onclick="showToast('Roster opened')">View roster</button>`}
-          </div>
-        </div>
-      </div>
-    </article>`;
-  }).join('');
+      </article>`;
+    }).join('');
+
+  } catch(err) {
+    console.error('Staff fetch failed:', err);
+    document.getElementById('staffCards').innerHTML=`<div class="text-center py-8 text-[#DD5A5A] text-sm font-medium">Failed to load staff data.</div>`;
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
-//  GUESTS
+//  GUESTS (Task 5b — live from GET /api/guest-requests)
 // ═══════════════════════════════════════════════════════════
-function renderGuests(){
-  const container=document.getElementById('guestCards');
-  container.innerHTML=GUEST_REQUESTS.map((g,i)=>{
-    const isPending=g.status==='Pending';
-    return `<article class="guest-card bg-white rounded-xl p-6 shadow-sm flex flex-col gap-4 transition-all" data-status="${g.status}" data-idx="${i}">
-      <div class="flex items-center justify-between flex-wrap gap-2">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-[#DDE3EE] text-[#414750] flex items-center justify-center font-semibold text-sm">${g.initials}</div>
-          <div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-base font-semibold text-[#1B2129]">${g.guest_name}</span>
-              <span class="px-2 py-0.5 rounded bg-[#E7E8EA] text-[#5A6372] text-[12px] font-['IBM_Plex_Mono']">Room ${g.room_id}</span>
-              ${g.vip?'<span class="px-2 py-0.5 rounded bg-[#EAF1FC] text-[#3B7DD8] text-[11px] font-semibold">VIP Guest</span>':''}
-              <span class="px-2 py-0.5 rounded bg-[#F2F4F6] text-[#7D8794] text-[11px]">${g.room_type}</span>
+function deriveInitials(name) {
+  const parts = name.replace(/[&]/g,' ').split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+  return (parts[0] || 'G').substring(0,2).toUpperCase();
+}
+
+async function renderGuests(){
+  const container = document.getElementById('guestCards');
+  container.innerHTML=`<div class="text-center py-12 text-[#7D8794] text-sm animate-pulse">Loading guest requests…</div>`;
+
+  try {
+    const res = await fetch('/api/guest-requests');
+    if (!res.ok) throw new Error(`Guest requests API ${res.status}`);
+    _guestRequestsCache = await res.json();
+
+    container.innerHTML = _guestRequestsCache.map((g,i)=>{
+      const isPending = g.status === 'Pending';
+      const initials = g.guest_name.split(' ').map(n=>n[0]).join('').substring(0,2);
+      return `<article class="guest-card bg-white rounded-xl p-6 shadow-sm flex flex-col gap-4 transition-all" data-status="${g.status}" data-idx="${i}">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-[#DDE3EE] text-[#414750] flex items-center justify-center font-semibold text-sm">${initials}</div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-base font-semibold text-[#1B2129]">${g.guest_name}</span>
+                <span class="px-2 py-0.5 rounded bg-[#E7E8EA] text-[#5A6372] text-[12px] font-['IBM_Plex_Mono']">Room ${g.room_id}</span>
+              </div>
             </div>
-            <span class="text-[12px] text-[#7D8794] font-['IBM_Plex_Mono']">${g.time}</span>
+          </div>
+          <div class="guest-status-badge">
+            ${isPending
+              ?`<span class="px-2.5 py-1 rounded-full bg-[#E7E8EA] text-[#535D68] text-[12px] font-medium flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-[#535D68]"></span>Pending</span>`
+              :`<span class="px-2.5 py-1 rounded-full bg-[#EDEEF0] text-[#1B2129] text-[12px] font-medium flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">check_circle</span>Sent</span>`}
           </div>
         </div>
-        <div class="guest-status-badge">
-          ${isPending
-            ?`<span class="px-2.5 py-1 rounded-full bg-[#E7E8EA] text-[#535D68] text-[12px] font-medium flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-[#535D68]"></span>Pending</span>`
-            :`<span class="px-2.5 py-1 rounded-full bg-[#EDEEF0] text-[#1B2129] text-[12px] font-medium flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">check_circle</span>Sent</span>`}
+        <div class="bg-[#F2F4F6] rounded-lg p-4">
+          <div class="text-[11px] text-[#7D8794] font-medium mb-1 uppercase tracking-wider">Guest's Original Request</div>
+          <p class="text-[15px] text-[#1B2129] italic">"${g.request_text}"</p>
         </div>
-      </div>
-      <div class="bg-[#F2F4F6] rounded-lg p-4">
-        <div class="text-[11px] text-[#7D8794] font-medium mb-1 uppercase tracking-wider">Guest's Original Request</div>
-        <p class="text-[15px] text-[#1B2129] italic">${g.request_text}</p>
-      </div>
-      <div class="${isPending?'bg-[#EAF1FC]':'bg-[#F2F4F6]'} rounded-xl p-4 flex flex-col gap-1.5">
-        <div class="flex items-center gap-2 text-sm ${isPending?'text-[#3B7DD8]':'text-[#7D8794]'}">
-          <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
-          <span>AI Recommendation & Operational Context</span>
+        <div class="${isPending?'bg-[#EAF1FC]':'bg-[#F2F4F6]'} rounded-xl p-4 flex flex-col gap-1.5">
+          <div class="flex items-center gap-2 text-sm ${isPending?'text-[#3B7DD8]':'text-[#7D8794]'}">
+            <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+            <span>AI Recommendation & Operational Context</span>
+          </div>
+          <p class="text-sm text-[#5A6372]">${g.recommendation}</p>
         </div>
-        <p class="text-sm text-[#5A6372]">${g.recommendation}</p>
-      </div>
-      <div class="flex items-center justify-between pt-1 flex-wrap gap-3 guest-action-row">
-        ${isPending?`
-          <div class="flex items-center gap-2 text-[12px] text-[#7D8794] font-['IBM_Plex_Mono']"><span class="material-symbols-outlined text-[16px]">verified</span><span>Pre-composed for dispatch</span></div>
-          <div class="flex items-center gap-2 ml-auto">
-            <button class="px-3 py-1.5 rounded-lg bg-[#EDEEF0] hover:bg-[#E7E8EA] text-[#1B2129] text-[12px] font-medium transition-colors">Edit response</button>
-            <button class="px-4 py-1.5 rounded-lg bg-[#3B7DD8] text-white text-[12px] font-medium hover:bg-[#2C6EC9] transition-colors flex items-center gap-1.5" onclick="sendToGuest(${i})"><span class="material-symbols-outlined text-[16px]">send</span><span>Send to guest</span></button>
-          </div>`
-        :`<div class="flex items-center gap-2 text-[12px] text-[#7D8794] font-['IBM_Plex_Mono']"><span class="material-symbols-outlined text-[16px]">done_all</span><span>Sent by Alex Morgan</span></div>
-          <button class="px-3 py-1.5 rounded-lg bg-[#EDEEF0] hover:bg-[#E7E8EA] text-[#1B2129] text-[12px] font-medium transition-colors flex items-center gap-1 ml-auto"><span class="material-symbols-outlined text-[16px]">visibility</span><span>View message</span></button>`}
-      </div>
-    </article>`;
-  }).join('');
+        <div class="flex items-center justify-between pt-1 flex-wrap gap-3 guest-action-row">
+          ${isPending?`
+            <div class="flex items-center gap-2 text-[12px] text-[#7D8794] font-['IBM_Plex_Mono']"><span class="material-symbols-outlined text-[16px]">verified</span><span>Pre-composed for dispatch</span></div>
+            <div class="flex items-center gap-2 ml-auto">
+              <button class="px-3 py-1.5 rounded-lg bg-[#EDEEF0] hover:bg-[#E7E8EA] text-[#1B2129] text-[12px] font-medium transition-colors">Edit response</button>
+              <button class="px-4 py-1.5 rounded-lg bg-[#3B7DD8] text-white text-[12px] font-medium hover:bg-[#2C6EC9] transition-colors flex items-center gap-1.5" onclick="sendToGuest(${i})"><span class="material-symbols-outlined text-[16px]">send</span><span>Send to guest</span></button>
+            </div>`
+          :`<div class="flex items-center gap-2 text-[12px] text-[#7D8794] font-['IBM_Plex_Mono']"><span class="material-symbols-outlined text-[16px]">done_all</span><span>Sent by Alex Morgan</span></div>
+            <button class="px-3 py-1.5 rounded-lg bg-[#EDEEF0] hover:bg-[#E7E8EA] text-[#1B2129] text-[12px] font-medium transition-colors flex items-center gap-1 ml-auto"><span class="material-symbols-outlined text-[16px]">visibility</span><span>View message</span></button>`}
+        </div>
+      </article>`;
+    }).join('');
+
+  } catch(err) {
+    console.error('Guest requests fetch failed:', err);
+    container.innerHTML=`<div class="text-center py-8 text-[#DD5A5A] text-sm font-medium">Failed to load guest requests.</div>`;
+  }
 }
 
 function sendToGuest(idx){
-  GUEST_REQUESTS[idx].status='Sent';
+  // Frontend-only status flip (no backend call) — this is intentional
+  _guestRequestsCache[idx].status='Sent';
   const card=document.querySelector(`.guest-card[data-idx="${idx}"]`);
   if(!card) return;
   card.dataset.status='Sent';
@@ -779,7 +808,7 @@ function sendToGuest(idx){
   // Update AI box styling
   const aiBox=card.querySelectorAll('.rounded-xl.p-4')[0];
   if(aiBox&&aiBox.classList.contains('bg-[#EAF1FC]')){aiBox.classList.remove('bg-[#EAF1FC]');aiBox.classList.add('bg-[#F2F4F6]');}
-  showToast(`Recommendation sent to Room ${GUEST_REQUESTS[idx].room_id}`);
+  showToast(`Recommendation sent to Room ${_guestRequestsCache[idx].room_id}`);
 }
 
 function filterGuests(filter){
@@ -807,24 +836,66 @@ document.getElementById('guestSearch')?.addEventListener('input',function(e){
 });
 
 // ═══════════════════════════════════════════════════════════
-//  REVENUE
+//  REVENUE (Task 5c — live from GET /api/revenue)
 // ═══════════════════════════════════════════════════════════
-function renderRevenue(){
-  const statusColors={Baseline:'#E7E8EA','Suggested +5%':'#E0A93A','Suggested +12%':'#3FAE6A','Sold out':'#3B7DD8'};
-  const statusTextColors={Baseline:'#5A6372','Suggested +5%':'#8f6300','Suggested +12%':'#256c41','Sold out':'#3B7DD8'};
-  const statusBgs={Baseline:'#F7F8FA','Suggested +5%':'rgba(224,169,58,0.15)','Suggested +12%':'rgba(63,174,106,0.2)','Sold out':'#EAF1FC'};
+async function renderRevenue(){
+  document.getElementById('revTable').innerHTML=`<tr><td colspan="6" class="py-12 text-center text-[#7D8794] text-sm animate-pulse">Loading revenue data…</td></tr>`;
 
-  document.getElementById('revTable').innerHTML=REVENUE_TYPES.map(rt=>{
-    const dotColor=rt.adj>0?(rt.highlight?'#3FAE6A':'#E0A93A'):rt.occ_pct>=100?'#3B7DD8':'#C2C6D4';
-    return `<tr class="${rt.highlight?'bg-[#3FAE6A]/5 hover:bg-[#3FAE6A]/10':'hover:bg-[#F9FAFB]'} transition-colors">
-      <td class="py-3.5 px-5"><div class="flex items-center gap-2.5"><span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${dotColor}"></span><span class="font-medium text-[#1B2129] ${rt.highlight?'font-semibold':''}">${rt.room_type}</span>${rt.highlight?'<span class="text-[11px] text-[#256c41]">High Demand</span>':''}</div></td>
-      <td class="py-3.5 px-5 font-['IBM_Plex_Mono'] text-sm text-[#7D8794]">${rt.total} rooms${rt.blocked?`<span class="text-[#DD5A5A] text-[11px] block">${rt.blocked} blocked</span>`:''}</td>
-      <td class="py-3.5 px-5"><div class="flex items-center gap-2"><span class="font-['IBM_Plex_Mono'] text-sm ${rt.highlight?'font-semibold':''} text-[#1B2129]">${rt.occ_pct}%</span><div class="w-16 h-1.5 bg-[#EDF1F5] rounded-full overflow-hidden"><div class="h-full rounded-full" style="width:${rt.occ_pct}%;background:${dotColor}"></div></div></div></td>
-      <td class="py-3.5 px-5"><span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium" style="background:${statusBgs[rt.status]||'#F7F8FA'};color:${statusTextColors[rt.status]||'#5A6372'}">${rt.status}</span></td>
-      <td class="py-3.5 px-5 font-['IBM_Plex_Mono'] text-sm ${rt.highlight?'font-semibold':''} text-[#1B2129]">${rt.adj>0?`<span class="text-[#7D8794] line-through mr-1">$${rt.base_rate}</span>`:''}\$${rt.suggested}<span class="text-[13px] text-[#7D8794] font-normal">/night</span></td>
-      <td class="py-3.5 px-5 text-[13px] text-[#7D8794]">${rt.adj>0?(rt.highlight?'<span class="text-[#256c41] font-medium flex items-center gap-1"><span class="material-symbols-outlined text-[15px]">verified</span>Active recommendation</span>':'<span class="text-[#8f6300] font-medium flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">hourglass_top</span>Pending review</span>'):rt.occ_pct>=100?'Inventory exhausted':'No adjustment active'}</td>
-    </tr>`;
-  }).join('');
+  try {
+    const res = await fetch('/api/revenue');
+    if (!res.ok) throw new Error(`Revenue API ${res.status}`);
+    const data = await res.json();
+
+    // Wire hero card from data.hero
+    const hero = data.hero;
+    document.getElementById('revTarget').textContent = `Target: ${hero.room_type}`;
+    document.getElementById('revAdjPct').textContent = `+${hero.suggested_adjustment_percent}%`;
+    document.getElementById('revReasoning').innerHTML = `<strong class="text-[#1B2129]">Demand pressure trigger:</strong> ${hero.reasoning}`;
+    document.getElementById('revCurrent').innerHTML = `$${hero.base_rate}<span class="text-[13px] text-[#9AA2B1] font-normal">/night</span>`;
+    const diff = hero.suggested_rate - hero.base_rate;
+    document.getElementById('revSuggested').innerHTML = `$${hero.suggested_rate}<span class="text-[13px] text-[#7D8794] font-normal">/night</span> <span class="text-[#3FAE6A] text-[12px]">(+$${diff})</span>`;
+
+    // Wire room type table from data.room_types
+    const statusColors={Baseline:'#E7E8EA','Suggested':'#E0A93A','High Demand':'#3FAE6A','Sold out':'#3B7DD8'};
+    const statusTextColors={Baseline:'#5A6372','Suggested':'#8f6300','High Demand':'#256c41','Sold out':'#3B7DD8'};
+    const statusBgs={Baseline:'#F7F8FA','Suggested':'rgba(224,169,58,0.15)','High Demand':'rgba(63,174,106,0.2)','Sold out':'#EAF1FC'};
+
+    // Find the hero room type for highlighting
+    const heroType = hero.room_type;
+
+    document.getElementById('revTable').innerHTML = data.room_types.map(rt=>{
+      const adj = rt.suggested_adjustment_percent;
+      const occPct = rt.occupancy_percent;
+      const isHero = rt.room_type === heroType && adj > 0;
+
+      // Derive status label
+      let statusLabel = 'Baseline';
+      if (occPct >= 100 && adj === 0) statusLabel = 'Sold out';
+      else if (isHero) statusLabel = `Suggested +${adj}%`;
+      else if (adj > 0) statusLabel = `Suggested +${adj}%`;
+
+      // Derive status key for colors
+      let statusKey = 'Baseline';
+      if (statusLabel === 'Sold out') statusKey = 'Sold out';
+      else if (isHero) statusKey = 'High Demand';
+      else if (adj > 0) statusKey = 'Suggested';
+
+      const dotColor = adj > 0 ? (isHero ? '#3FAE6A' : '#E0A93A') : occPct >= 100 ? '#3B7DD8' : '#C2C6D4';
+
+      return `<tr class="${isHero?'bg-[#3FAE6A]/5 hover:bg-[#3FAE6A]/10':'hover:bg-[#F9FAFB]'} transition-colors">
+        <td class="py-3.5 px-5"><div class="flex items-center gap-2.5"><span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${dotColor}"></span><span class="font-medium text-[#1B2129] ${isHero?'font-semibold':''}">${rt.room_type}</span>${isHero?'<span class="text-[11px] text-[#256c41]">High Demand</span>':''}</div></td>
+        <td class="py-3.5 px-5 font-['IBM_Plex_Mono'] text-sm text-[#7D8794]">${rt.total_rooms} rooms${rt.blocked?`<span class="text-[#DD5A5A] text-[11px] block">${rt.blocked} blocked</span>`:''}</td>
+        <td class="py-3.5 px-5"><div class="flex items-center gap-2"><span class="font-['IBM_Plex_Mono'] text-sm ${isHero?'font-semibold':''} text-[#1B2129]">${occPct}%</span><div class="w-16 h-1.5 bg-[#EDF1F5] rounded-full overflow-hidden"><div class="h-full rounded-full" style="width:${Math.min(occPct,100)}%;background:${dotColor}"></div></div></div></td>
+        <td class="py-3.5 px-5"><span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium" style="background:${statusBgs[statusKey]||'#F7F8FA'};color:${statusTextColors[statusKey]||'#5A6372'}">${statusLabel}</span></td>
+        <td class="py-3.5 px-5 font-['IBM_Plex_Mono'] text-sm ${isHero?'font-semibold':''} text-[#1B2129]">${adj>0?`<span class="text-[#7D8794] line-through mr-1">$${rt.base_rate}</span>`:''}$${rt.suggested_rate}<span class="text-[13px] text-[#7D8794] font-normal">/night</span></td>
+        <td class="py-3.5 px-5 text-[13px] text-[#7D8794]">${adj>0?(isHero?'<span class="text-[#256c41] font-medium flex items-center gap-1"><span class="material-symbols-outlined text-[15px]">verified</span>Active recommendation</span>':'<span class="text-[#8f6300] font-medium flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">hourglass_top</span>Pending review</span>'):occPct>=100?'Inventory exhausted':'No adjustment active'}</td>
+      </tr>`;
+    }).join('');
+
+  } catch(err) {
+    console.error('Revenue fetch failed:', err);
+    document.getElementById('revTable').innerHTML=`<tr><td colspan="6" class="py-8 text-center text-[#DD5A5A] text-sm font-medium">Failed to load revenue data.</td></tr>`;
+  }
 }
 
 // Revenue buttons
@@ -860,15 +931,71 @@ document.getElementById('btnExport')?.addEventListener('click',function(){
 });
 
 // ═══════════════════════════════════════════════════════════
+//  INIT — all render functions are now async (fetch-based)
+// ═══════════════════════════════════════════════════════════
+async function init(){
+  onRoute();
+  // Fire all fetches in parallel
+  await Promise.all([
+    renderDashboard(),
+    renderRoomOps(),
+    renderStaff(),
+    renderGuests(),
+    renderRevenue()
+  ]);
+}
+document.addEventListener('DOMContentLoaded',init);
+
+// Revenue buttons
+document.getElementById('revApply')?.addEventListener('click',function(){
+  this.innerHTML='<span class="material-symbols-outlined text-[18px] animate-spin">sync</span><span>Broadcasting...</span>';
+  this.classList.add('opacity-75','pointer-events-none');
+  setTimeout(()=>{
+    this.innerHTML='<span class="material-symbols-outlined text-[18px]">done</span><span>Applied to PMS</span>';
+    this.classList.remove('bg-[#3B7DD8]','hover:bg-[#2C6EC9]','opacity-75','pointer-events-none');
+    this.classList.add('bg-[#3FAE6A]');
+    showToast('Rate adjustment applied to PMS & Channel Manager');
+  },800);
+});
+
+document.getElementById('revDismiss')?.addEventListener('click',function(){
+  const hero=document.getElementById('revenueHero');
+  if(hero) hero.style.opacity='0.45';
+  this.textContent='Dismissed for 4h';
+  this.disabled=true;
+  showToast('Recommendation dismissed for 4 hours');
+});
+
+// Staff buttons
+document.getElementById('btnAutoAdjust')?.addEventListener('click',function(){
+  const orig=this.innerHTML;
+  this.innerHTML='<span class="material-symbols-outlined text-[16px] animate-spin">sync</span><span>Balancing shifts...</span>';
+  setTimeout(()=>{this.innerHTML='<span class="material-symbols-outlined text-[16px]">check</span><span>Shifts Optimized</span>';setTimeout(()=>{this.innerHTML=orig;},2500);showToast('Shift allocations optimized');},800);
+});
+document.getElementById('btnExport')?.addEventListener('click',function(){
+  const orig=this.innerHTML;
+  this.innerHTML='<span class="material-symbols-outlined text-[16px]">hourglass_empty</span><span>Generating...</span>';
+  setTimeout(()=>{this.innerHTML='<span class="material-symbols-outlined text-[16px] text-[#3FAE6A]">download_done</span><span>Downloaded</span>';setTimeout(()=>{this.innerHTML=orig;},2000);showToast('Roster exported successfully');},600);
+});
+
+// Room Ops buttons
+function markResolved(roomId){
+  showToast('Maintenance task marked as resolved');
+}
+
+// ═══════════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════════
-function init(){
-  renderDashboard();
-  renderRoomOps();
-  renderStaff();
-  renderGuests();
-  renderRevenue();
+async function init(){
   onRoute();
+  // Fire all fetches in parallel — each handles its own loading state
+  await Promise.all([
+    renderDashboard(),
+    renderRoomOps(),
+    renderStaff(),
+    renderGuests(),
+    renderRevenue()
+  ]);
 }
 document.addEventListener('DOMContentLoaded',init);
 </script>

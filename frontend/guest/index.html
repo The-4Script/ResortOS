@@ -82,25 +82,22 @@ const params=new URLSearchParams(window.location.search);
 const roomId=params.get('room')||'203';
 document.getElementById('roomBadge').textContent='Room '+roomId;
 
-// Mock concierge responses (same keyword logic as backend)
-function getConciergeResponse(text){
-  const t=text.toLowerCase();
-  if(/dinner|restaurant|eat|food|dining|italian|seafood|lunch/.test(t)){
-    return{recommendation:"We'd love to arrange that for you! We recommend Mare Nostrum Ristorante at 7:30 PM — the garden patio offers a quiet, intimate setting with dedicated sommelier service. The 7:00 PM window is quite popular tonight, so 7:30 provides a more relaxed experience with priority seating.",note:"Shall I confirm this reservation for you?"};
+// Concierge API — POST /api/concierge
+async function getConciergeResponse(text) {
+  try {
+    const res = await fetch('/api/concierge', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({room_id: parseInt(roomId), request_text: text})
+    });
+    if (!res.ok) throw new Error(`Concierge API ${res.status}`);
+    const data = await res.json();
+    return {recommendation: data.recommendation, note: data.reason || null};
+  } catch(err) {
+    console.error('Concierge API failed, using fallback:', err);
+    // Fallback to basic response
+    return {recommendation: `Thank you for your request! Our concierge team has reviewed your inquiry for Room ${roomId} and we're working on the best options for you.`, note: 'Is there anything specific you\'d like us to prioritize?'};
   }
-  if(/spa|massage|wellness|treatment|relax|sauna|facial/.test(t)){
-    return{recommendation:"Wonderful choice! We recommend the 4:30 PM couples deep tissue massage at our Lagoon Cabana Suite. Our spa is fully staffed today and the cabana offers complete acoustic privacy with natural lagoon views before the beautiful evening lighting transition.",note:"Would you like me to book this slot?"};
-  }
-  if(/pool|swim|activity|tennis|golf|yoga|gym/.test(t)){
-    return{recommendation:"Great timing! Our infinity pool currently has reserved cabana service available. We also have a guided sunset yoga session at 5:30 PM on the Ocean Terrace (6 spots remaining), and Tennis Court 2 has a 4:00 PM slot open — our resident pro is available for a private lesson if you're interested.",note:"Which activity interests you most?"};
-  }
-  if(/checkout|late|extend|stay|departure/.test(t)){
-    return{recommendation:`We'd be happy to arrange a late checkout for Room ${roomId}! We can offer a complimentary extension until 12:30 PM. Our standard checkout is 11:00 AM, and this gives you an extra 90 minutes to enjoy your morning at a relaxed pace.`,note:"Shall I confirm the 12:30 PM late checkout?"};
-  }
-  if(/transfer|airport|car|taxi|transport|shuttle/.test(t)){
-    return{recommendation:`Absolutely! We'll arrange a private luxury hybrid shuttle for your departure from Room ${roomId}. Our concierge will coordinate bellhop assistance and luggage handling 15 minutes before your pickup time at the lobby entrance. The drive to the airport is approximately 42 minutes.`,note:"What time is your flight? I'll calculate the optimal pickup time."};
-  }
-  return{recommendation:`Thank you for your request! Our concierge team has reviewed your inquiry for Room ${roomId} and we're working on the best options for you. A personalized recommendation will be ready shortly.`,note:"Is there anything specific you'd like us to prioritize?"};
 }
 
 function addMessage(content,isUser){
