@@ -5,7 +5,10 @@ Run once: python seed.py
 """
 import sqlite3, os, random
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "resort.db")
+DB_PATH = os.environ.get(
+    "DATABASE_PATH",
+    os.path.join(os.path.dirname(__file__), "resort.db"),
+)
 
 def seed():
     if os.path.exists(DB_PATH):

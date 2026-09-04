@@ -123,7 +123,7 @@ resortos/
 ├── backend/
 │   ├── main.py              # FastAPI app — all 9 API endpoints + static file routing
 │   ├── seed.py              # SQLite database seeder (120 keys, 360 assets, 5 depts)
-│   ├── resort.db            # SQLite database
+│   ├── resort.db            # Local SQLite database (use a mounted volume in production)
 │   └── requirements.txt     # fastapi, uvicorn, scikit-learn, pydantic
 ├── frontend/
 │   ├── staff/
@@ -135,10 +135,37 @@ resortos/
 │   ├── model.pkl            # Pre-trained PEMS predictive risk classifier
 │   ├── train.py             # Random forest training pipeline
 │   ├── data_generator.py    # Synthetic IoT sensor stream generator
-│   └── genai_service.py     # Gemini explanation adapter
+│   └── genai_service.py     # Groq explanation adapter
 ├── walkthrough.md           # End-to-end verification and audit log
 └── README.md                # System documentation
 ```
+
+### Groq configuration
+
+The app uses Groq's OpenAI-compatible streaming API with model
+`openai/gpt-oss-120b` for concierge and maintenance explanations. Set the key
+only as a server-side environment variable; never commit it to the repository:
+
+```bash
+GROQ_API_KEY=gsk_...
+```
+
+If the variable is absent or Groq is unavailable, the existing deterministic
+local recommendations/templates are used.
+
+### Live deployment
+
+This repository includes a [`Dockerfile`](./Dockerfile) and
+[`render.yaml`](./render.yaml) for Render. Render is the simplest option for
+this single FastAPI service: create a Blueprint from the repository, add
+`GROQ_API_KEY` in the dashboard, and deploy. The included 1 GB persistent disk
+mounts SQLite at `/data/resort.db`, so guest requests and status changes survive
+restarts. Persistent disks require a paid Render web service.
+
+Railway with a mounted volume or Fly.io with a volume are also suitable. Do not
+use an ephemeral filesystem for production SQLite, because redeploys will erase
+the database. For multiple production instances, migrate SQLite to PostgreSQL
+instead; SQLite on one mounted volume is intended for a single service instance.
 
 ---
 
@@ -205,6 +232,7 @@ curl -X POST http://127.0.0.1:8000/api/pems/scan-all
 | `GET` | `/api/dashboard` | Aggregated property statistics (occupancy, attention keys, staff, signal). |
 | `GET` | `/api/rooms` | Array of 120 rooms with turnover status and fault flags. |
 | `GET` | `/api/rooms/{id}` | Room details with asset sensor telemetry (AC, TV, STB) and exclusion flag. |
+| `POST` | `/api/rooms/{id}/resolve` | Persist a staff-confirmed room resolution and return it to Ready status. |
 | `GET` | `/api/staff` | Departmental allocations, recommended headcount, and coverage gaps. |
 | `GET` | `/api/revenue` | Algorithmic rate adjustments per room type based on occupancy and scarcity. |
 | `POST` | `/api/concierge` | AI recommendation generation and automatic staff triage logging. |

@@ -7,6 +7,9 @@ import sqlite3
 import os
 import random
 import math
+import json
+import urllib.error
+import urllib.request
 from contextlib import contextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,9 +20,25 @@ import pickle
 import sys
 
 # ── App Setup ───────────────────────────────────────────────────────────
-DB_PATH = os.path.join(os.path.dirname(__file__), "resort.db")
+DB_PATH = os.environ.get(
+    "DATABASE_PATH",
+    os.path.join(os.path.dirname(__file__), "resort.db"),
+)
 
 app = FastAPI(title="Resort OS", version="2.4.0")
+
+
+def _ensure_database():
+    """Create the initial database only when the configured persistent store is absent."""
+    if os.path.exists(DB_PATH):
+        return
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    sys.path.insert(0, os.path.dirname(__file__))
+    from seed import seed
+    seed()
+
+
+_ensure_database()
 
 app.add_middleware(
     CORSMiddleware,
@@ -45,27 +64,57 @@ class ConciergeRequest(BaseModel):
     request_text: str
 
 
-# ── Concierge AI Logic ──────────────────────────────────────────────────
-# Try Gemini if API key is available, fall back to keyword mock
-_gemini_model = None
+# ── Groq Concierge Integration ──────────────────────────────────────────
+GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_MODEL = "openai/gpt-oss-120b"
 
-def _try_init_gemini():
-    """Attempt to initialize Gemini client. Returns model or None."""
-    global _gemini_model
-    if _gemini_model is not None:
-        return _gemini_model
 
-    api_key = os.environ.get("GEMINI_API_KEY")
+def _groq_completion(messages: list[dict], max_completion_tokens: int = 2048) -> str | None:
+    """Call Groq's streaming OpenAI-compatible API and return the combined text."""
+    api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
         return None
 
+    payload = {
+        "messages": messages,
+        "model": GROQ_MODEL,
+        "temperature": 1,
+        "max_completion_tokens": max_completion_tokens,
+        "top_p": 1,
+        "stream": True,
+        "reasoning_effort": "medium",
+        "stop": None,
+    }
+    request = urllib.request.Request(
+        GROQ_API_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+
+    chunks = []
     try:
-        import google.generativeai as genai
-        genai.configure(api_key=api_key)
-        _gemini_model = genai.GenerativeModel("gemini-2.0-flash")
-        return _gemini_model
-    except Exception:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            for raw_line in response:
+                line = raw_line.decode("utf-8").strip()
+                if not line.startswith("data: "):
+                    continue
+                data = line[6:]
+                if data == "[DONE]":
+                    break
+                event = json.loads(data)
+                delta = event.get("choices", [{}])[0].get("delta", {})
+                content = delta.get("content")
+                if content:
+                    chunks.append(content)
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, KeyError) as exc:
+        print(f"[Groq] Concierge request failed; using local fallback: {exc}")
         return None
+
+    return "".join(chunks).strip() or None
 
 
 def _keyword_mock_concierge(request_text: str, room_id: int) -> dict:
@@ -105,11 +154,8 @@ def _keyword_mock_concierge(request_text: str, room_id: int) -> dict:
 
 
 async def generate_concierge_response(request_text: str, room_id: int) -> dict:
-    """Try Gemini first, fall back to keyword mock."""
-    model = _try_init_gemini()
-    if model is not None:
-        try:
-            prompt = f"""You are an AI concierge at a luxury resort. A guest in Room {room_id} has made this request:
+    """Try Groq first, then use the deterministic local recommendation."""
+    prompt = f"""You are an AI concierge at a luxury resort. A guest in Room {room_id} has made this request:
 
 "{request_text}"
 
@@ -122,18 +168,18 @@ Respond with ONLY a JSON object (no markdown, no code fences) with exactly two k
 - "recommendation": Your recommendation to the guest (2-3 sentences, warm and specific)
 - "reason": Internal operational reasoning for staff (1-2 sentences, factual)"""
 
-            response = model.generate_content(prompt)
-            import json
-            text = response.text.strip()
-            # Strip markdown code fences if present
+    text = _groq_completion([{"role": "user", "content": prompt}])
+    if text:
+        try:
             if text.startswith("```"):
                 text = text.split("\n", 1)[1]
                 if text.endswith("```"):
                     text = text[:-3]
-                text = text.strip()
-            return json.loads(text)
-        except Exception:
-            pass  # Fall through to keyword mock
+            result = json.loads(text.strip())
+            if isinstance(result, dict) and "recommendation" in result and "reason" in result:
+                return result
+        except json.JSONDecodeError as exc:
+            print(f"[Groq] Concierge returned invalid JSON; using local fallback: {exc}")
 
     return _keyword_mock_concierge(request_text, room_id)
 
@@ -170,6 +216,23 @@ def get_room(room_id: int):
         result["assets"] = [dict(a) for a in assets]
         result["excluded_from_allocation"] = room["status"] == "Blocked"
         return result
+
+
+@app.post("/api/rooms/{room_id}/resolve")
+def resolve_room(room_id: int):
+    """Mark a room ready after staff resolves its flagged issue."""
+    with get_db() as conn:
+        room = conn.execute(
+            "SELECT room_id FROM rooms WHERE room_id=?", (room_id,)
+        ).fetchone()
+        if not room:
+            raise HTTPException(404, f"Room {room_id} not found")
+        conn.execute(
+            "UPDATE rooms SET status='Ready', has_flagged_asset=0 WHERE room_id=?",
+            (room_id,),
+        )
+        conn.commit()
+    return {"room_id": room_id, "status": "Ready"}
 
 
 @app.get("/api/staff")
@@ -404,14 +467,14 @@ def _load_pems_model():
     else:
         print(f"[PEMS] No model found at {model_path} — prediction endpoints will return 503")
 
-# Add ml directory to path for genai_service import
+# Add ml directory to path for the maintenance explanation service
 sys.path.insert(0, ML_DIR)
 try:
     from genai_service import generate_explanation, get_top_factors
-    _genai_available = True
+    _groq_service_available = True
 except ImportError:
-    _genai_available = False
-    print("[PEMS] genai_service not available — reason strings will be generic")
+    _groq_service_available = False
+    print("[PEMS] Explanation service not available — reason strings will be generic")
 
 _load_pems_model()
 
@@ -471,7 +534,7 @@ async def pems_predict(req: PEMSPredictRequest):
     top_factors = []
     reason = f"Risk: {prob:.0%} — {tier} priority"
 
-    if _genai_available:
+    if _groq_service_available:
         top_factors = get_top_factors(
             req.power_draw, req.usage_hours,
             req.operating_hours_since_service, req.error_log_count,
@@ -517,7 +580,7 @@ async def pems_scan_all():
             status = "Critical" if tier == "High" else ("Warning" if tier == "Medium" else "Operational")
 
             reason = f"Risk: {risk_pct}% — {tier} priority"
-            if _genai_available:
+            if _groq_service_available:
                 reason = await generate_explanation(
                     a["asset_type"], prob, a["power_draw"], a["usage_hours"],
                     a["operating_hours_since_service"], a["error_log_count"],
@@ -561,7 +624,9 @@ def pems_health():
     """GET /pems/health — check if PEMS model is loaded and ready."""
     return {
         "model_loaded": _pems_model is not None,
-        "genai_available": _genai_available,
+        "genai_available": bool(os.environ.get("GROQ_API_KEY")) and _groq_service_available,
+        "genai_provider": "groq",
+        "groq_available": bool(os.environ.get("GROQ_API_KEY")) and _groq_service_available,
         "feature_columns": _pems_feature_cols,
     }
 
