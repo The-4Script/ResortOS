@@ -431,6 +431,7 @@ const ACTIVITY=[
 // ── Live data caches (populated on fetch) ──
 let _roomsCache = [];
 let _guestRequestsCache = [];
+let _revenueData = null;
 const _resolvedRoomIds = new Set();
 
 // ═══════════════════════════════════════════════════════════
@@ -471,6 +472,10 @@ function showToast(msg){
   document.getElementById('toastMsg').textContent=msg;
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function escapeHtml(value){
+  return String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
 }
 
 // ── First-visit guided tour ──
@@ -828,7 +833,7 @@ async function openDrawer(roomId){
         </div>
       </div>
       <footer class="p-5 border-t border-[#E4E7EB] bg-white flex items-center gap-3 shrink-0">
-        <button class="flex-1 py-2.5 px-4 rounded-lg border border-gray-300 hover:bg-gray-50 text-[#5A6372] font-semibold text-xs transition-colors flex items-center justify-center gap-1.5" onclick="showToast('Technician dispatch request logged for Room ${room.room_id}')">
+        <button class="flex-1 py-2.5 px-4 rounded-lg border border-gray-300 hover:bg-gray-50 text-[#5A6372] font-semibold text-xs transition-colors flex items-center justify-center gap-1.5" onclick="dispatchTechnician(${room.room_id})">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>Assign technician
         </button>
         ${isResolved ? `
@@ -874,6 +879,17 @@ async function markResolved(roomId){
   renderRoomOps();
   renderDashboard();
   showToast(`Room ${roomId} marked as resolved — status set to Ready`);
+}
+
+async function dispatchTechnician(roomId){
+  try {
+    const res=await fetch(`/api/rooms/${roomId}/dispatch`,{method:'POST'});
+    if(!res.ok) throw new Error(`Dispatch API ${res.status}`);
+    showToast(`Technician dispatch opened for Room ${roomId}`);
+  } catch(err) {
+    console.error('Technician dispatch failed:',err);
+    showToast(`Could not open a technician dispatch for Room ${roomId}`);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -931,9 +947,9 @@ async function renderStaff(){
               <span class="text-[13px] text-[#7D8794]">${meta.insight}</span>
             </div>
             <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-              ${!isOk?`<button class="h-8 px-3 rounded-lg border border-[#E4E7EB] bg-white text-xs font-semibold text-[#1B2129] hover:bg-[#F5F7FA] transition-colors" onclick="showToast('Reassignment initiated for ${d.name}')">Reassign</button>
-              <button class="h-8 px-3 rounded-lg text-white text-xs font-semibold hover:opacity-90 transition-opacity" style="background:${color}" onclick="showToast('Backup pool notified for ${d.name}')">Call backup pool</button>`
-              :`<button class="h-8 px-3 rounded-lg border border-[#E4E7EB] bg-white text-xs font-semibold text-[#1B2129] hover:bg-[#F5F7FA] transition-colors" onclick="showToast('Shift roster opened for ${d.name}')">View roster</button>`}
+              ${!isOk?`<button class="h-8 px-3 rounded-lg border border-[#E4E7EB] bg-white text-xs font-semibold text-[#1B2129] hover:bg-[#F5F7FA] transition-colors" onclick="recordStaffAction('${d.name}','Reassign')">Reassign</button>
+              <button class="h-8 px-3 rounded-lg text-white text-xs font-semibold hover:opacity-90 transition-opacity" style="background:${color}" onclick="recordStaffAction('${d.name}','Call backup pool')">Call backup pool</button>`
+              :`<button class="h-8 px-3 rounded-lg border border-[#E4E7EB] bg-white text-xs font-semibold text-[#1B2129] hover:bg-[#F5F7FA] transition-colors" onclick="recordStaffAction('${d.name}','View roster')">View roster</button>`}
             </div>
           </div>
         </div>
@@ -943,6 +959,17 @@ async function renderStaff(){
   } catch(err) {
     console.error('Staff fetch failed:', err);
     document.getElementById('staffCards').innerHTML=`<div class="text-center py-8 text-[#DD5A5A] text-sm font-medium">Failed to load staff data.</div>`;
+  }
+}
+
+async function recordStaffAction(department,action){
+  try {
+    const res=await fetch('/api/staff/actions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({department,action})});
+    if(!res.ok) throw new Error(`Staff action API ${res.status}`);
+    showToast(`${action} recorded for ${department}`);
+  } catch(err) {
+    console.error('Staff action failed:',err);
+    showToast(`Could not record ${action.toLowerCase()}`);
   }
 }
 
@@ -975,7 +1002,7 @@ async function renderGuests(){
             <div class="w-10 h-10 rounded-full bg-[#DDE3EE] text-[#414750] flex items-center justify-center font-semibold text-sm">${initials}</div>
             <div>
               <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-base font-semibold text-[#1B2129]">${g.guest_name}</span>
+                <span class="text-base font-semibold text-[#1B2129]">${escapeHtml(g.guest_name)}</span>
                 <span class="px-2 py-0.5 rounded bg-[#E7E8EA] text-[#5A6372] text-[12px] font-['IBM_Plex_Mono']">Room ${g.room_id}</span>
               </div>
             </div>
@@ -988,24 +1015,24 @@ async function renderGuests(){
         </div>
         <div class="bg-[#F2F4F6] rounded-lg p-4">
           <div class="text-[11px] text-[#7D8794] font-medium mb-1 uppercase tracking-wider">Guest's Original Request</div>
-          <p class="text-[15px] text-[#1B2129] italic">"${g.request_text}"</p>
+          <p class="text-[15px] text-[#1B2129] italic">"${escapeHtml(g.request_text)}"</p>
         </div>
         <div class="${isPending?'bg-[#EAF1FC]':'bg-[#F2F4F6]'} rounded-xl p-4 flex flex-col gap-1.5">
           <div class="flex items-center gap-2 text-sm ${isPending?'text-[#3B7DD8]':'text-[#7D8794]'}">
             <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
             <span>AI Recommendation & Operational Context</span>
           </div>
-          <p class="text-sm text-[#5A6372]">${g.recommendation}</p>
+          <p class="text-sm text-[#5A6372]">${escapeHtml(g.recommendation)}</p>
         </div>
         <div class="flex items-center justify-between pt-1 flex-wrap gap-3 guest-action-row">
           ${isPending?`
             <div class="flex items-center gap-2 text-[12px] text-[#7D8794] font-['IBM_Plex_Mono']"><span class="material-symbols-outlined text-[16px]">verified</span><span>Pre-composed for dispatch</span></div>
             <div class="flex items-center gap-2 ml-auto">
-              <button class="px-3 py-1.5 rounded-lg bg-[#EDEEF0] hover:bg-[#E7E8EA] text-[#1B2129] text-[12px] font-medium transition-colors" onclick="showToast('Opening response composer for Room ${g.room_id}')">Edit response</button>
+              <button class="px-3 py-1.5 rounded-lg bg-[#EDEEF0] hover:bg-[#E7E8EA] text-[#1B2129] text-[12px] font-medium transition-colors" onclick="editGuestResponse(${i})">Edit response</button>
               <button class="px-4 py-1.5 rounded-lg bg-[#3B7DD8] text-white text-[12px] font-medium hover:bg-[#2C6EC9] transition-colors flex items-center gap-1.5" onclick="sendToGuest(${i})"><span class="material-symbols-outlined text-[16px]">send</span><span>Send to guest</span></button>
             </div>`
           :`<div class="flex items-center gap-2 text-[12px] text-[#7D8794] font-['IBM_Plex_Mono']"><span class="material-symbols-outlined text-[16px]">done_all</span><span>Sent by Alex Morgan</span></div>
-            <button class="px-3 py-1.5 rounded-lg bg-[#EDEEF0] hover:bg-[#E7E8EA] text-[#1B2129] text-[12px] font-medium transition-colors flex items-center gap-1 ml-auto" onclick="showToast('Displaying dispatched message for Room ${g.room_id}')"><span class="material-symbols-outlined text-[16px]">visibility</span><span>View message</span></button>`}
+            <button class="px-3 py-1.5 rounded-lg bg-[#EDEEF0] hover:bg-[#E7E8EA] text-[#1B2129] text-[12px] font-medium transition-colors flex items-center gap-1 ml-auto" onclick="viewGuestMessage(${i})"><span class="material-symbols-outlined text-[16px]">visibility</span><span>View message</span></button>`}
         </div>
       </article>`;
     }).join('');
@@ -1017,17 +1044,47 @@ async function renderGuests(){
   }
 }
 
-function sendToGuest(idx){
-  _guestRequestsCache[idx].status='Sent';
+async function sendToGuest(idx){
+  const request=_guestRequestsCache[idx];
+  try {
+    const res=await fetch(`/api/guest-requests/${request.id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'Sent'})});
+    if(!res.ok) throw new Error(`Guest status API ${res.status}`);
+  } catch(err) {
+    console.error('Guest dispatch failed:',err);
+    showToast(`Could not send the recommendation for Room ${request.room_id}`);
+    return;
+  }
+  request.status='Sent';
   const card=document.querySelector(`.guest-card[data-idx="${idx}"]`);
   if(!card) return;
   card.dataset.status='Sent';
   card.querySelector('.guest-status-badge').innerHTML=`<span class="px-2.5 py-1 rounded-full bg-[#EDEEF0] text-[#1B2129] text-[12px] font-medium flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">check_circle</span>Sent</span>`;
-  card.querySelector('.guest-action-row').innerHTML=`<div class="flex items-center gap-2 text-[12px] text-[#7D8794] font-['IBM_Plex_Mono']"><span class="material-symbols-outlined text-[16px]">done_all</span><span>Sent just now by Alex Morgan</span></div><button class="px-3 py-1.5 rounded-lg bg-[#EDEEF0] hover:bg-[#E7E8EA] text-[#1B2129] text-[12px] font-medium transition-colors flex items-center gap-1 ml-auto" onclick="showToast('Displaying dispatched message for Room ${_guestRequestsCache[idx].room_id}')"><span class="material-symbols-outlined text-[16px]">visibility</span><span>View message</span></button>`;
+  card.querySelector('.guest-action-row').innerHTML=`<div class="flex items-center gap-2 text-[12px] text-[#7D8794] font-['IBM_Plex_Mono']"><span class="material-symbols-outlined text-[16px]">done_all</span><span>Sent just now by Alex Morgan</span></div><button class="px-3 py-1.5 rounded-lg bg-[#EDEEF0] hover:bg-[#E7E8EA] text-[#1B2129] text-[12px] font-medium transition-colors flex items-center gap-1 ml-auto" onclick="viewGuestMessage(${idx})"><span class="material-symbols-outlined text-[16px]">visibility</span><span>View message</span></button>`;
   const aiBox=card.querySelectorAll('.rounded-xl.p-4')[0];
   if(aiBox&&aiBox.classList.contains('bg-[#EAF1FC]')){aiBox.classList.remove('bg-[#EAF1FC]');aiBox.classList.add('bg-[#F2F4F6]');}
   applyGuestFiltering();
   showToast(`Recommendation sent to Room ${_guestRequestsCache[idx].room_id}`);
+}
+
+async function editGuestResponse(idx){
+  const request=_guestRequestsCache[idx];
+  const recommendation=window.prompt('Edit the recommendation before sending:',request.recommendation);
+  if(recommendation===null || !recommendation.trim()) return;
+  try {
+    const res=await fetch(`/api/guest-requests/${request.id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:request.status,recommendation:recommendation.trim()})});
+    if(!res.ok) throw new Error(`Guest edit API ${res.status}`);
+    request.recommendation=recommendation.trim();
+    await renderGuests();
+    showToast(`Response updated for Room ${request.room_id}`);
+  } catch(err) {
+    console.error('Guest response update failed:',err);
+    showToast('Could not save the edited response');
+  }
+}
+
+function viewGuestMessage(idx){
+  const request=_guestRequestsCache[idx];
+  window.alert(`Message sent to Room ${request.room_id}:\n\n${request.recommendation}`);
 }
 
 function filterGuests(filter){
@@ -1069,6 +1126,7 @@ async function renderRevenue(){
     const res = await fetch('/api/revenue');
     if (!res.ok) throw new Error(`Revenue API ${res.status}`);
     const data = await res.json();
+    _revenueData = data;
 
     // Wire hero card from data.hero
     const hero = data.hero;
@@ -1124,14 +1182,19 @@ async function renderRevenue(){
 
 // Revenue buttons
 document.getElementById('revApply')?.addEventListener('click',function(){
+  const hero=_revenueData?.hero;
+  if(!hero){showToast('Revenue data is still loading');return;}
   this.innerHTML='<span class="material-symbols-outlined text-[18px] animate-spin">sync</span><span>Broadcasting...</span>';
   this.classList.add('opacity-75','pointer-events-none');
-  setTimeout(()=>{
-    this.innerHTML='<span class="material-symbols-outlined text-[18px]">done</span><span>Applied to PMS</span>';
-    this.classList.remove('bg-[#3B7DD8]','hover:bg-[#2C6EC9]','opacity-75','pointer-events-none');
-    this.classList.add('bg-[#3FAE6A]');
-    showToast('Rate adjustment applied to PMS & Channel Manager');
-  },800);
+  fetch('/api/revenue/apply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({room_type:hero.room_type,adjustment_percent:hero.suggested_adjustment_percent,base_rate:hero.base_rate,suggested_rate:hero.suggested_rate})})
+    .then(res=>{if(!res.ok)throw new Error(`Revenue apply API ${res.status}`);return res.json();})
+    .then(()=>{
+      this.innerHTML='<span class="material-symbols-outlined text-[18px]">done</span><span>Rate recorded</span>';
+      this.classList.remove('bg-[#3B7DD8]','hover:bg-[#2C6EC9]','opacity-75','pointer-events-none');
+      this.classList.add('bg-[#3FAE6A]');
+      showToast('Rate adjustment recorded in the revenue ledger');
+    })
+    .catch(err=>{console.error('Revenue apply failed:',err);this.innerHTML='<span class="material-symbols-outlined text-[18px]">bolt</span><span>Apply adjustment</span>';this.classList.remove('opacity-75','pointer-events-none');showToast('Could not record the rate adjustment');});
 });
 
 document.getElementById('revDismiss')?.addEventListener('click',function(){
@@ -1145,13 +1208,29 @@ document.getElementById('revDismiss')?.addEventListener('click',function(){
 // Staff buttons
 document.getElementById('btnAutoAdjust')?.addEventListener('click',function(){
   const orig=this.innerHTML;
+  recordStaffAction('Property staffing','Auto-adjust shifts');
   this.innerHTML='<span class="material-symbols-outlined text-[16px] animate-spin">sync</span><span>Balancing shifts...</span>';
   setTimeout(()=>{this.innerHTML='<span class="material-symbols-outlined text-[16px]">check</span><span>Shifts Optimized</span>';setTimeout(()=>{this.innerHTML=orig;},2500);showToast('Shift allocations optimized');},800);
 });
 document.getElementById('btnExport')?.addEventListener('click',function(){
   const orig=this.innerHTML;
+  recordStaffAction('Property staffing','Export roster');
   this.innerHTML='<span class="material-symbols-outlined text-[16px]">hourglass_empty</span><span>Generating...</span>';
-  setTimeout(()=>{this.innerHTML='<span class="material-symbols-outlined text-[16px] text-[#3FAE6A]">download_done</span><span>Downloaded</span>';setTimeout(()=>{this.innerHTML=orig;},2000);showToast('Roster exported successfully');},600);
+  fetch('/api/staff')
+    .then(res=>{if(!res.ok)throw new Error(`Staff API ${res.status}`);return res.json();})
+    .then(data=>{
+      const rows=[['Department','Current staff','Recommended staff','Gap'],...data.departments.map(d=>[d.name,d.current_staff,d.recommended_staff,d.gap])];
+      const csv=rows.map(row=>row.map(value=>`"${String(value).replace(/"/g,'""')}"`).join(',')).join('\n');
+      const link=document.createElement('a');
+      link.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+      link.download=`resort-os-roster-${new Date().toISOString().slice(0,10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      this.innerHTML='<span class="material-symbols-outlined text-[16px] text-[#3FAE6A]">download_done</span><span>Downloaded</span>';
+      setTimeout(()=>{this.innerHTML=orig;},2000);
+      showToast('Roster CSV downloaded');
+    })
+    .catch(err=>{console.error('Roster export failed:',err);this.innerHTML=orig;showToast('Could not export the roster');});
 });
 
 // INIT

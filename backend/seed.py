@@ -5,6 +5,7 @@ Run once: python seed.py
 """
 import argparse
 import sqlite3, os, random
+from datetime import date, timedelta
 
 DB_PATH = os.environ.get(
     "DATABASE_PATH",
@@ -78,6 +79,36 @@ def seed(force=False):
             check_in  TEXT NOT NULL,
             check_out TEXT NOT NULL,
             FOREIGN KEY (room_id) REFERENCES rooms(room_id)
+        )
+    """)
+
+    c.execute("""
+        CREATE TABLE technician_dispatches (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            room_id INTEGER NOT NULL,
+            status TEXT NOT NULL DEFAULT 'Open',
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """)
+
+    c.execute("""
+        CREATE TABLE rate_adjustments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            room_type TEXT NOT NULL,
+            adjustment_percent INTEGER NOT NULL,
+            base_rate INTEGER NOT NULL,
+            suggested_rate INTEGER NOT NULL,
+            status TEXT NOT NULL DEFAULT 'Applied',
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """)
+
+    c.execute("""
+        CREATE TABLE staff_actions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            department TEXT NOT NULL,
+            action TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
         )
     """)
 
@@ -222,7 +253,7 @@ def seed(force=False):
     for i, (room_id, *_) in enumerate(occupied_rooms):
         name = guest_names[i % len(guest_names)]
         c.execute("INSERT INTO reservations (room_id, guest_name, check_in, check_out) VALUES (?,?,?,?)",
-                  (room_id, name, "2025-10-23", "2025-10-26"))
+                  (room_id, name, date.today().isoformat(), (date.today() + timedelta(days=3)).isoformat()))
 
     conn.commit()
     conn.close()

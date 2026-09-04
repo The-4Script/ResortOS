@@ -48,7 +48,7 @@ flowchart LR
 
 ---
 
-## ✅ Verified & Delivered (100% Complete)
+## ✅ Verified MVP Capabilities
 
 Every single component, endpoint, view, and button has been swept end-to-end and verified with zero console errors.
 
@@ -263,6 +263,11 @@ curl -X POST http://127.0.0.1:8000/api/pems/scan-all
 | `GET` | `/api/guest-requests` | Feed of guest requests with recommendations and dispatch statuses. |
 | `POST` | `/api/pems/scan-all` | Runs ML predictive maintenance across all 360 assets and auto-blocks high-risk rooms. |
 | `GET` | `/api/pems/health` | Diagnostic endpoint checking ML model availability and feature columns. |
+| `POST` | `/api/auth/login` | Validates the demo staff credentials for the operations console. |
+| `POST` | `/api/rooms/{id}/dispatch` | Records a technician dispatch for a room. |
+| `PATCH` | `/api/guest-requests/{id}` | Persists guest request status and response edits. |
+| `POST` | `/api/revenue/apply` | Persists a proposed rate adjustment in the revenue ledger. |
+| `POST` | `/api/staff/actions` | Records staffing operations initiated from the console. |
 
 ---
 

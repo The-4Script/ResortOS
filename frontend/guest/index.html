@@ -82,6 +82,10 @@ const params=new URLSearchParams(window.location.search);
 const roomId=params.get('room')||'203';
 document.getElementById('roomBadge').textContent='Room '+roomId;
 
+function escapeHtml(value){
+  return String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+}
+
 // Concierge API — POST /api/concierge
 async function getConciergeResponse(text) {
   try {
@@ -95,8 +99,7 @@ async function getConciergeResponse(text) {
     return {recommendation: data.recommendation, note: data.reason || null};
   } catch(err) {
     console.error('Concierge API failed, using fallback:', err);
-    // Fallback to basic response
-    return {recommendation: `Thank you for your request! Our concierge team has reviewed your inquiry for Room ${roomId} and we're working on the best options for you.`, note: 'Is there anything specific you\'d like us to prioritize?'};
+    return {recommendation: `The concierge service is waking up. Your request for Room ${roomId} has not been sent yet. Please try again in a moment.`, note: 'Live service unavailable — no request was recorded.'};
   }
 }
 
@@ -106,10 +109,10 @@ function addMessage(content,isUser){
   div.className='msg-in flex gap-3'+(isUser?' flex-row-reverse':'');
   if(isUser){
     div.innerHTML=`<div class="w-8 h-8 rounded-full bg-[#DDE3EE] text-[#414750] flex items-center justify-center shrink-0 mt-0.5 text-xs font-semibold">G</div>
-      <div class="bg-primary text-white rounded-2xl rounded-tr-md px-5 py-3.5 shadow-sm max-w-xl"><p class="text-sm leading-relaxed">${content}</p></div>`;
+      <div class="bg-primary text-white rounded-2xl rounded-tr-md px-5 py-3.5 shadow-sm max-w-xl"><p class="text-sm leading-relaxed">${escapeHtml(content)}</p></div>`;
   } else {
     div.innerHTML=`<div class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5"><span class="material-symbols-outlined text-[18px]">smart_toy</span></div>
-      <div class="bg-white rounded-2xl rounded-tl-md px-5 py-4 shadow-sm border border-[#E4E7EB] max-w-xl"><p class="text-sm text-[#1B2129] leading-relaxed">${content.recommendation}</p>${content.note?`<p class="text-sm text-[#7D8794] mt-2 pt-2 border-t border-[#F0F2F5]">${content.note}</p>`:''}</div>`;
+      <div class="bg-white rounded-2xl rounded-tl-md px-5 py-4 shadow-sm border border-[#E4E7EB] max-w-xl"><p class="text-sm text-[#1B2129] leading-relaxed">${escapeHtml(content.recommendation)}</p>${content.note?`<p class="text-sm text-[#7D8794] mt-2 pt-2 border-t border-[#F0F2F5]">${escapeHtml(content.note)}</p>`:''}</div>`;
   }
   chat.appendChild(div);
   chat.scrollTop=chat.scrollHeight;

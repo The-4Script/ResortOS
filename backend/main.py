@@ -18,6 +18,7 @@ from fastapi.responses import FileResponse, RedirectResponse
 from pydantic import BaseModel
 import pickle
 import sys
+from datetime import date
 
 # ── App Setup ───────────────────────────────────────────────────────────
 DB_PATH = os.environ.get(
@@ -32,13 +33,53 @@ def _ensure_database():
     """Create the initial database only when the configured persistent store is absent."""
     if os.path.exists(DB_PATH):
         return
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    db_dir = os.path.dirname(DB_PATH)
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
     sys.path.insert(0, os.path.dirname(__file__))
     from seed import seed
     seed()
 
+    return
+
+
+def _ensure_optional_tables():
+    """Add operational tables without rebuilding an existing live database."""
+    db_dir = os.path.dirname(DB_PATH)
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS technician_dispatches (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                room_id INTEGER NOT NULL,
+                status TEXT NOT NULL DEFAULT 'Open',
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS rate_adjustments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                room_type TEXT NOT NULL,
+                adjustment_percent INTEGER NOT NULL,
+                base_rate INTEGER NOT NULL,
+                suggested_rate INTEGER NOT NULL,
+                status TEXT NOT NULL DEFAULT 'Applied',
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS staff_actions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                department TEXT NOT NULL,
+                action TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+        """)
+
 
 _ensure_database()
+_ensure_optional_tables()
 
 app.add_middleware(
     CORSMiddleware,
@@ -62,6 +103,32 @@ def get_db():
 class ConciergeRequest(BaseModel):
     room_id: int
     request_text: str
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class GuestRequestStatus(BaseModel):
+    status: str
+    recommendation: str | None = None
+
+
+class RateAdjustmentRequest(BaseModel):
+    room_type: str
+    adjustment_percent: int
+    base_rate: int
+    suggested_rate: int
+
+
+class TechnicianDispatchRequest(BaseModel):
+    room_id: int
+
+
+class StaffActionRequest(BaseModel):
+    department: str
+    action: str
 
 
 # ── Groq Concierge Integration ──────────────────────────────────────────
@@ -186,6 +253,15 @@ Respond with ONLY a JSON object (no markdown, no code fences) with exactly two k
 
 # ── API Endpoints ───────────────────────────────────────────────────────
 
+@app.post("/api/auth/login")
+def login(req: LoginRequest):
+    """Validate the demo staff credentials used by the presentation console."""
+    expected_username = os.environ.get("DEMO_STAFF_USERNAME", "a.morgan@grandresort.internal")
+    expected_password = os.environ.get("DEMO_STAFF_PASSWORD", "ResortOS!2025")
+    if req.username != expected_username or req.password != expected_password:
+        raise HTTPException(401, "Invalid staff credentials")
+    return {"authenticated": True, "staff_name": "Alex Morgan", "role": "General Manager"}
+
 @app.get("/api/rooms")
 def list_rooms():
     """GET /rooms — array of all rooms with status and flagged-asset boolean."""
@@ -235,6 +311,20 @@ def resolve_room(room_id: int):
     return {"room_id": room_id, "status": "Ready"}
 
 
+@app.post("/api/rooms/{room_id}/dispatch")
+def dispatch_technician(room_id: int):
+    """Create a durable technician dispatch for a room."""
+    with get_db() as conn:
+        if not conn.execute("SELECT 1 FROM rooms WHERE room_id=?", (room_id,)).fetchone():
+            raise HTTPException(404, f"Room {room_id} not found")
+        cursor = conn.execute(
+            "INSERT INTO technician_dispatches (room_id, status) VALUES (?, 'Open')",
+            (room_id,),
+        )
+        conn.commit()
+        return {"dispatch_id": cursor.lastrowid, "room_id": room_id, "status": "Open"}
+
+
 @app.get("/api/staff")
 def get_staff():
     """GET /staff — occupancy-driven staffing recommendations per department."""
@@ -257,7 +347,7 @@ def get_staff():
             dept_list.append(dd)
 
         return {
-            "date": "2025-10-24",
+            "date": date.today().isoformat(),
             "occupancy_percent": occupancy_pct,
             "departments": dept_list
         }
@@ -266,11 +356,16 @@ def get_staff():
 @app.post("/api/concierge")
 async def concierge(req: ConciergeRequest):
     """POST /concierge — AI concierge recommendation."""
+    if not req.request_text.strip() or len(req.request_text) > 2000:
+        raise HTTPException(422, "Request text must be between 1 and 2000 characters")
     result = await generate_concierge_response(req.request_text, req.room_id)
 
     # Save to guest_requests table
     with get_db() as conn:
         # Try to find a guest name from reservations
+        room = conn.execute("SELECT room_id FROM rooms WHERE room_id=?", (req.room_id,)).fetchone()
+        if not room:
+            raise HTTPException(404, f"Room {req.room_id} not found")
         guest = conn.execute(
             "SELECT guest_name FROM reservations WHERE room_id=? LIMIT 1",
             (req.room_id,)
@@ -291,9 +386,33 @@ def get_guest_requests():
     """GET /guest-requests — feed of all guest requests with recommendations."""
     with get_db() as conn:
         rows = conn.execute(
-            "SELECT room_id, guest_name, request_text, recommendation, status FROM guest_requests ORDER BY id DESC"
+            "SELECT id, room_id, guest_name, request_text, recommendation, status FROM guest_requests ORDER BY id DESC"
         ).fetchall()
         return [dict(r) for r in rows]
+
+
+@app.patch("/api/guest-requests/{request_id}")
+def update_guest_request(request_id: int, req: GuestRequestStatus):
+    """Persist dispatch status for a guest request."""
+    if req.status not in {"Pending", "Sent"}:
+        raise HTTPException(422, "Status must be Pending or Sent")
+    with get_db() as conn:
+        if req.recommendation is not None:
+            if not req.recommendation.strip() or len(req.recommendation) > 4000:
+                raise HTTPException(422, "Recommendation must be between 1 and 4000 characters")
+            cursor = conn.execute(
+                "UPDATE guest_requests SET status=?, recommendation=? WHERE id=?",
+                (req.status, req.recommendation.strip(), request_id),
+            )
+        else:
+            cursor = conn.execute(
+                "UPDATE guest_requests SET status=? WHERE id=?",
+                (req.status, request_id),
+            )
+        if cursor.rowcount == 0:
+            raise HTTPException(404, "Guest request not found")
+        conn.commit()
+    return {"id": request_id, "status": req.status}
 
 
 @app.get("/api/revenue")
@@ -390,6 +509,35 @@ def get_revenue():
             },
             "room_types": type_breakdown
         }
+
+
+@app.post("/api/revenue/apply")
+def apply_rate_adjustment(req: RateAdjustmentRequest):
+    """Persist a proposed rate adjustment for the selected room type."""
+    if req.adjustment_percent < 0 or req.adjustment_percent > 100:
+        raise HTTPException(422, "Adjustment must be between 0 and 100 percent")
+    with get_db() as conn:
+        cursor = conn.execute(
+            "INSERT INTO rate_adjustments (room_type, adjustment_percent, base_rate, suggested_rate) VALUES (?,?,?,?)",
+            (req.room_type, req.adjustment_percent, req.base_rate, req.suggested_rate),
+        )
+        conn.commit()
+    return {"adjustment_id": cursor.lastrowid, "status": "Applied", "room_type": req.room_type}
+
+
+@app.post("/api/staff/actions")
+def record_staff_action(req: StaffActionRequest):
+    """Persist a staffing operation performed from the console."""
+    allowed_actions = {"Reassign", "Call backup pool", "View roster", "Auto-adjust shifts", "Export roster"}
+    if req.action not in allowed_actions:
+        raise HTTPException(422, "Unsupported staff action")
+    with get_db() as conn:
+        cursor = conn.execute(
+            "INSERT INTO staff_actions (department, action) VALUES (?,?)",
+            (req.department, req.action),
+        )
+        conn.commit()
+    return {"action_id": cursor.lastrowid, "department": req.department, "action": req.action, "status": "Recorded"}
 
 
 @app.get("/api/dashboard")
@@ -609,6 +757,19 @@ async def pems_scan_all():
             "UPDATE rooms SET has_flagged_asset=0",
             tuple(blocked_rooms) if blocked_rooms else (),
         )
+
+        # Only release rooms that this scan previously blocked for a flagged asset.
+        # Occupied, dirty, and arrival rooms keep their operational status.
+        if blocked_rooms:
+            conn.execute(
+                "UPDATE rooms SET status='Ready' WHERE status='Blocked' AND has_flagged_asset=0 "
+                "AND room_id NOT IN (" + ",".join("?" * len(blocked_rooms)) + ")",
+                tuple(blocked_rooms),
+            )
+        else:
+            conn.execute(
+                "UPDATE rooms SET status='Ready' WHERE status='Blocked' AND has_flagged_asset=0"
+            )
 
         conn.commit()
 

@@ -103,7 +103,7 @@ tailwind.config = { theme: { extend: {
     <div class="flex items-center gap-1">
       <span class="text-[11px] text-secondary font-['IBM_Plex_Mono']">Resort OS v2.4.0</span>
       <span class="text-secondary text-[11px]">&bull;</span>
-      <span class="text-[11px] font-medium text-secondary">Enterprise Security SSO</span>
+      <span class="text-[11px] font-medium text-secondary">Protected staff access</span>
     </div>
   </div>
 </div>
@@ -118,15 +118,23 @@ function togglePwd(){
 document.getElementById('loginForm').addEventListener('submit',function(e){
   e.preventDefault();
   const btn=this.querySelector('button[type="submit"]');
+  const form=this;
   btn.innerHTML='<span class="material-symbols-outlined text-[18px] animate-spin">sync</span><span>Authenticating...</span>';
   btn.classList.add('opacity-75','pointer-events-none');
-  setTimeout(()=>{
-    if (window.location.protocol === 'file:') {
-      window.location.href = 'index.html#dashboard';
-    } else {
-      window.location.href = '/dashboard#dashboard';
-    }
-  },800);
+  if (window.location.protocol === 'file:') {
+    window.location.href = 'index.html#dashboard';
+    return;
+  }
+  fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:form.username.value,password:form.password.value})})
+    .then(res=>{if(!res.ok)throw new Error('Invalid credentials');return res.json();})
+    .then(()=>{window.location.href='/dashboard#dashboard';})
+    .catch(()=>{
+      btn.innerHTML='<span>Sign in to console</span><span class="material-symbols-outlined text-[18px]">arrow_forward</span>';
+      btn.classList.remove('opacity-75','pointer-events-none');
+      form.password.setCustomValidity('Invalid staff credentials');
+      form.password.reportValidity();
+      form.password.addEventListener('input',()=>form.password.setCustomValidity(''),{once:true});
+    });
 });
 </script>
 </body>
