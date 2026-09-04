@@ -1,12 +1,16 @@
 """
 Resort OS — PEMS GenAI Explanation Service
 Generates human-readable maintenance explanations for room assets.
-Uses Gemini API if available, falls back to template-based explanations.
+Uses Groq API if available, falls back to template-based explanations.
 """
 import os
+import json
+import urllib.error
+import urllib.request
 
-# ── Gemini Setup ─────────────────────────────────────────────────────────
-_genai_model = None
+# ── Groq Setup ───────────────────────────────────────────────────────────
+GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_MODEL = "openai/gpt-oss-120b"
 
 SYSTEM_PROMPT = """You are an AI maintenance analyst for a luxury resort's room-asset management system.
 Your scope is strictly limited to resort room asset maintenance — specifically AC units, TVs, and set-top boxes.
@@ -21,26 +25,52 @@ Keep responses to 2-3 sentences. Be specific and technical but accessible to ope
 Do NOT answer questions outside of resort room asset maintenance."""
 
 
-def _try_init_genai():
-    """Attempt to initialise Gemini client. Returns model or None."""
-    global _genai_model
-    if _genai_model is not None:
-        return _genai_model
-
-    api_key = os.environ.get("GEMINI_API_KEY")
+def _groq_completion(prompt: str) -> str | None:
+    """Call Groq's streaming API and return the combined response text."""
+    api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
         return None
 
+    payload = {
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": prompt},
+        ],
+        "model": GROQ_MODEL,
+        "temperature": 1,
+        "max_completion_tokens": 2048,
+        "top_p": 1,
+        "stream": True,
+        "reasoning_effort": "medium",
+        "stop": None,
+    }
+    request = urllib.request.Request(
+        GROQ_API_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    chunks = []
     try:
-        import google.generativeai as genai
-        genai.configure(api_key=api_key)
-        _genai_model = genai.GenerativeModel(
-            "gemini-2.0-flash",
-            system_instruction=SYSTEM_PROMPT,
-        )
-        return _genai_model
-    except Exception:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            for raw_line in response:
+                line = raw_line.decode("utf-8").strip()
+                if not line.startswith("data: "):
+                    continue
+                data = line[6:]
+                if data == "[DONE]":
+                    break
+                event = json.loads(data)
+                content = event.get("choices", [{}])[0].get("delta", {}).get("content")
+                if content:
+                    chunks.append(content)
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, KeyError) as exc:
+        print(f"[Groq] Maintenance explanation failed; using template: {exc}")
         return None
+    return "".join(chunks).strip() or None
 
 
 # ── Template-Based Fallback ──────────────────────────────────────────────
@@ -140,24 +170,19 @@ async def generate_explanation(
     operating_hours_since_service: int,
     error_log_count: int,
 ) -> str:
-    """Generate maintenance explanation. Tries Gemini, falls back to templates."""
-    model = _try_init_genai()
-
-    if model is not None:
-        try:
-            prompt = (
-                f"Asset: {asset_type} in a resort room\n"
-                f"Risk probability: {risk_probability:.1%}\n"
-                f"Power draw: {power_draw:.0%} of rated capacity\n"
-                f"Usage: {usage_hours:.1f} hours/day\n"
-                f"Hours since last service: {operating_hours_since_service}\n"
-                f"Error events (30 days): {error_log_count}\n\n"
-                f"Generate a concise maintenance explanation for operations staff."
-            )
-            response = model.generate_content(prompt)
-            return response.text.strip()
-        except Exception:
-            pass  # Fall through to template
+    """Generate maintenance explanation with Groq, falling back to templates."""
+    prompt = (
+        f"Asset: {asset_type} in a resort room\n"
+        f"Risk probability: {risk_probability:.1%}\n"
+        f"Power draw: {power_draw:.0%} of rated capacity\n"
+        f"Usage: {usage_hours:.1f} hours/day\n"
+        f"Hours since last service: {operating_hours_since_service}\n"
+        f"Error events (30 days): {error_log_count}\n\n"
+        f"Generate a concise maintenance explanation for operations staff."
+    )
+    explanation = _groq_completion(prompt)
+    if explanation:
+        return explanation
 
     return _template_explanation(
         asset_type, risk_probability, power_draw,

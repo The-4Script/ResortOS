@@ -755,7 +755,15 @@ function closeDrawer(){
   document.getElementById('drawerPanel').classList.remove('open');
 }
 
-function markResolved(roomId){
+async function markResolved(roomId){
+  try {
+    const res = await fetch(`/api/rooms/${roomId}/resolve`, {method:'POST'});
+    if(!res.ok) throw new Error(`Room resolve API ${res.status}`);
+  } catch(err) {
+    console.error('Room resolve failed:', err);
+    showToast(`Could not persist Room ${roomId} resolution`);
+    return;
+  }
   _resolvedRoomIds.add(roomId);
   const room = _roomsCache.find(r=>r.room_id===roomId);
   if(room){room.status='Ready';room.has_flagged_asset=0;}

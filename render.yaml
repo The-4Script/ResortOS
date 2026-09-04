@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: resort-os
+    runtime: docker
+    healthCheckPath: /api/pems/health
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: DATABASE_PATH
+        value: /data/resort.db
+    disk:
+      name: resort-os-data
+      mountPath: /data
+      sizeGB: 1
