@@ -43,9 +43,26 @@ tailwind.config={darkMode:"class",theme:{extend:{colors:{
 .toast.show{transform:translateY(0);opacity:1;pointer-events:auto;}
 .tour-backdrop{opacity:0;pointer-events:none;transition:opacity .2s;}
 .tour-backdrop.open{opacity:1;pointer-events:auto;}
-.tour-spotlight{position:fixed;z-index:61;border:2px solid #3B7DD8;border-radius:12px;box-shadow:0 0 0 9999px rgba(15,20,23,.48),0 0 0 5px rgba(59,125,216,.18);pointer-events:none;transition:all .25s ease;}
+.tour-spotlight{position:fixed;z-index:61;opacity:0;visibility:hidden;border:2px solid #3B7DD8;border-radius:12px;box-shadow:0 0 0 9999px rgba(15,20,23,.48),0 0 0 5px rgba(59,125,216,.18);pointer-events:none;transition:all .25s ease,opacity .2s ease,visibility .2s ease;}
+.tour-spotlight.open{opacity:1;visibility:visible;}
 .tour-card{position:fixed;z-index:62;width:min(380px,calc(100vw - 32px));transition:all .25s ease;}
 @media(max-width:640px){.tour-spotlight{display:none;}.tour-card{left:16px!important;right:16px;bottom:16px;top:auto!important;width:auto;}}
+
+/* The dashboard uses fixed utility colors, so this compact override keeps its
+  existing layout while giving dark mode a deliberate operations-console feel. */
+body.dark-mode{background:#0b1220!important;color:#e5edf8!important;}
+body.dark-mode aside,body.dark-mode .bg-white{background-color:#111b2d!important;color:#e5edf8!important;border-color:#243550!important;}
+body.dark-mode main{background:#0b1220!important;}
+body.dark-mode .text-\[\#1B2129\],body.dark-mode .text-\[\#191c1e\]{color:#e5edf8!important;}
+body.dark-mode .text-\[\#5A6372\],body.dark-mode .text-\[\#7D8794\],body.dark-mode .text-\[\#8C95A3\],body.dark-mode .text-\[\#9AA2B1\]{color:#9eb0c8!important;}
+body.dark-mode .border-\[\#E4E7EB\],body.dark-mode .border-\[\#F0F2F5\]{border-color:#243550!important;}
+body.dark-mode .bg-\[\#F7F8FA\],body.dark-mode .bg-\[\#F9FAFB\],body.dark-mode .bg-\[\#F5F7FA\],body.dark-mode .bg-\[\#F2F4F6\],body.dark-mode .bg-\[\#EDEEF0\]{background-color:#17243a!important;}
+body.dark-mode input{background-color:#17243a!important;color:#e5edf8!important;border-color:#2a3e5f!important;}
+body.dark-mode input::placeholder{color:#7185a1!important;}
+body.dark-mode .tour-card{background:#111b2d!important;border-color:#2d527f!important;}
+body.dark-mode .tour-card .text-\[\#1B2129\]{color:#f1f6fc!important;}
+body.dark-mode .hover\:bg-\[\#F5F7FA\]:hover,body.dark-mode .hover\:bg-\[\#F9FAFB\]:hover{background-color:#1b2d49!important;}
+body.dark-mode .shadow-sm,body.dark-mode .shadow-xl{box-shadow:0 8px 24px rgba(0,0,0,.24)!important;}
 </style>
 </head>
 <body class="antialiased min-h-screen flex bg-[#F7F8FA] text-[#1B2129] font-['Inter']">
@@ -122,6 +139,9 @@ tailwind.config={darkMode:"class",theme:{extend:{colors:{
         <svg class="w-4 h-4 text-[#8C95A3] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none fill-none stroke-current stroke-2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
         <input class="w-64 sm:w-72 bg-white text-[13px] pl-10 pr-4 py-2 rounded-lg border border-[#E4E7EB] text-[#1B2129] placeholder-[#9AA2B1] focus:outline-none focus:border-[#3B7DD8] shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-all" id="dashSearch" placeholder="Search rooms, guests, alerts..." type="text" onkeydown="if(event.key==='Enter'){navigate('roomops');}"/>
       </div>
+      <button class="p-2 rounded-lg bg-white border border-[#E4E7EB] text-[#5A6372] hover:text-[#1B2129] shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-colors" id="themeToggle" onclick="toggleTheme()" aria-label="Switch to dark mode" title="Switch theme">
+        <span class="material-symbols-outlined text-[19px]" id="themeIcon">dark_mode</span>
+      </button>
       <button class="relative p-2 rounded-lg bg-white border border-[#E4E7EB] text-[#5A6372] hover:text-[#1B2129] shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-colors" onclick="showToast('3 critical maintenance alerts pending in Room Ops')">
         <svg class="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span class="absolute -top-1 -right-1 bg-[#DD5A5A] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ring-2 ring-white leading-none">3</span>
@@ -478,6 +498,21 @@ function escapeHtml(value){
   return String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
 }
 
+const THEME_KEY = 'resortOsTheme';
+
+function applyTheme(theme){
+  const isDark=theme==='dark';
+  document.body.classList.toggle('dark-mode',isDark);
+  document.getElementById('themeIcon').textContent=isDark?'light_mode':'dark_mode';
+  document.getElementById('themeToggle').setAttribute('aria-label',isDark?'Switch to light mode':'Switch to dark mode');
+}
+
+function toggleTheme(){
+  const next=document.body.classList.contains('dark-mode')?'light':'dark';
+  localStorage.setItem(THEME_KEY,next);
+  applyTheme(next);
+}
+
 // ── First-visit guided tour ──
 const TOUR_KEY = 'resortOsStaffTourCompleted';
 const TOUR_STEPS = [
@@ -523,9 +558,11 @@ function startTour(force=false){
   if(!force && localStorage.getItem(TOUR_KEY)) return;
   _tourIndex=0;
   const backdrop=document.getElementById('tourBackdrop');
+  const spotlight=document.getElementById('tourSpotlight');
   const card=document.getElementById('tourCard');
   backdrop.classList.add('open');
   backdrop.setAttribute('aria-hidden','false');
+  spotlight.classList.add('open');
   card.classList.remove('hidden');
   renderTourStep();
 }
@@ -546,8 +583,11 @@ function skipTour(){
   localStorage.setItem(TOUR_KEY,'true');
   document.getElementById('tourBackdrop').classList.remove('open');
   document.getElementById('tourBackdrop').setAttribute('aria-hidden','true');
+  document.getElementById('tourSpotlight').classList.remove('open');
   document.getElementById('tourCard').classList.add('hidden');
 }
+document.getElementById('tourBackdrop').addEventListener('click',skipTour);
+document.addEventListener('keydown',event=>{if(event.key==='Escape')skipTour();});
 window.addEventListener('resize',()=>{if(!document.getElementById('tourCard')?.classList.contains('hidden'))positionTour();});
 
 // ═══════════════════════════════════════════════════════════
@@ -1235,6 +1275,7 @@ document.getElementById('btnExport')?.addEventListener('click',function(){
 
 // INIT
 async function init(){
+  applyTheme(localStorage.getItem(THEME_KEY)||'light');
   onRoute();
   await Promise.all([
     renderDashboard(),
