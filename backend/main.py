@@ -293,9 +293,9 @@ def get_revenue():
 
             reasoning = ""
             if adj > 0 and rt["blocked"] > 0:
-                reasoning = f"{type_occupancy}% occupancy with {rt['blocked']} room(s) blocked — reduced available inventory drives scarcity pricing."
+                reasoning = f"{type_occupancy}% occupancy with {rt['blocked']} room(s) blocked ({blocked} blocked property-wide) — reduced available inventory drives scarcity pricing."
             elif adj > 0:
-                reasoning = f"{type_occupancy}% occupancy exceeds demand threshold — suggested rate increase to optimize yield."
+                reasoning = f"{type_occupancy}% occupancy exceeds demand threshold ({blocked} blocked property-wide) — suggested rate increase to optimize yield."
             else:
                 reasoning = f"{type_occupancy}% occupancy within normal range — baseline pricing maintained."
 

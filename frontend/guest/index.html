@@ -132,7 +132,7 @@ function removeTypingIndicator(){
 }
 
 // Form submit
-document.getElementById('conciergeForm').addEventListener('submit',function(e){
+document.getElementById('conciergeForm').addEventListener('submit',async function(e){
   e.preventDefault();
   const input=document.getElementById('reqInput');
   const text=input.value.trim();
@@ -140,20 +140,31 @@ document.getElementById('conciergeForm').addEventListener('submit',function(e){
   addMessage(text,true);
   input.value='';
   addTypingIndicator();
-  setTimeout(()=>{
+  try {
+    const response=await getConciergeResponse(text);
+    setTimeout(()=>{
+      removeTypingIndicator();
+      addMessage(response,false);
+    },600);
+  } catch(err) {
     removeTypingIndicator();
-    const response=getConciergeResponse(text);
-    addMessage(response,false);
-  },800+Math.random()*600);
+    addMessage({recommendation:'Our concierge team is reviewing your request and will assist you promptly.'},false);
+  }
 });
 
 // Quick chips
 document.querySelectorAll('.chip').forEach(btn=>{
   btn.addEventListener('click',function(){
     const input=document.getElementById('reqInput');
-    const chipTexts={'Dinner reservation':'We would like a quiet dinner for two tonight, around 7 PM. Italian or seafood preferred.','Spa booking':'Couples massage booking for this afternoon, something tranquil around 4 or 5 PM.','Late checkout':'Could we get a late checkout tomorrow? Around 1 PM if possible.','Airport transfer':'Need airport transfer for 6:30 AM flight tomorrow, two carry-ons and one large bag.','Pool & activities':'What activities are available today? Pool, tennis, yoga — open to anything fun.'};
-    input.value=chipTexts[this.textContent]||this.textContent;
-    input.focus();
+    const chipTexts={
+      'Dinner reservation':'We would like a quiet dinner for two tonight, around 7 PM. Italian or seafood preferred.',
+      'Spa booking':'Couples massage booking for this afternoon, something tranquil around 4 or 5 PM.',
+      'Late checkout':'Could we get a late checkout tomorrow? Around 1 PM if possible.',
+      'Airport transfer':'Need airport transfer for 6:30 AM flight tomorrow, two carry-ons and one large bag.',
+      'Pool & activities':'What activities are available today? Pool, tennis, yoga — open to anything fun.'
+    };
+    input.value=chipTexts[this.textContent.trim()]||this.textContent.trim();
+    document.getElementById('conciergeForm').dispatchEvent(new Event('submit'));
   });
 });
 </script>

@@ -120,7 +120,13 @@ document.getElementById('loginForm').addEventListener('submit',function(e){
   const btn=this.querySelector('button[type="submit"]');
   btn.innerHTML='<span class="material-symbols-outlined text-[18px] animate-spin">sync</span><span>Authenticating...</span>';
   btn.classList.add('opacity-75','pointer-events-none');
-  setTimeout(()=>{window.location.href='index.html';},800);
+  setTimeout(()=>{
+    if (window.location.protocol === 'file:') {
+      window.location.href = 'index.html#dashboard';
+    } else {
+      window.location.href = '/dashboard#dashboard';
+    }
+  },800);
 });
 </script>
 </body>
