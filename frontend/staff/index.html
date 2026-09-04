@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script>
 tailwind.config={darkMode:"class",theme:{extend:{colors:{
 "surface-variant":"#e1e2e4","surface-container-highest":"#e1e2e4","surface-tint":"#005db6",
@@ -46,7 +47,23 @@ tailwind.config={darkMode:"class",theme:{extend:{colors:{
 .tour-spotlight{position:fixed;z-index:61;opacity:0;visibility:hidden;border:2px solid #3B7DD8;border-radius:12px;box-shadow:0 0 0 9999px rgba(15,20,23,.48),0 0 0 5px rgba(59,125,216,.18);pointer-events:none;transition:all .25s ease,opacity .2s ease,visibility .2s ease;}
 .tour-spotlight.open{opacity:1;visibility:visible;}
 .tour-card{position:fixed;z-index:62;width:min(380px,calc(100vw - 32px));transition:all .25s ease;}
-@media(max-width:640px){.tour-spotlight{display:none;}.tour-card{left:16px!important;right:16px;bottom:16px;top:auto!important;width:auto;}}
+.room-map-shell{min-height:380px;}
+.room-map-canvas{display:block;width:100%;height:380px;min-height:280px;outline:none;}
+.room-map-tooltip{opacity:0;transform:translateY(4px);pointer-events:none;transition:opacity .15s,transform .15s;}
+.room-map-tooltip.show{opacity:1;transform:translateY(0);}
+.room-map-legend{display:flex;flex-wrap:wrap;gap:.5rem 1rem;}
+main.pl-\[240px\]{min-width:0;}
+@media(max-width:1024px){.room-map-shell{min-height:330px;}.room-map-canvas{height:330px;}}
+@media(max-width:640px){
+  aside.w-\[240px\]{width:72px!important;}
+  aside.w-\[240px\] .px-6,aside.w-\[240px\] .px-3,aside.w-\[240px\] .p-3{padding-left:10px!important;padding-right:10px!important;}
+  aside.w-\[240px\] .flex.flex-col,aside.w-\[240px\] nav span,aside.w-\[240px\] .px-3.mb-2,aside.w-\[240px\] button span:last-child{display:none;}
+  aside.w-\[240px\] nav .nav-link{justify-content:center;padding-left:0!important;padding-right:0!important;}
+  main.pl-\[240px\]{width:100%;max-width:100%;padding-left:72px!important;overflow-x:hidden;}
+  main.pl-\[240px\] > .max-w-7xl{width:100%;min-width:0;}
+  .room-map-shell{min-height:280px;}.room-map-canvas{height:280px;}
+  .room-map-legend{gap:.35rem .7rem;font-size:10px;}
+}
 
 /* The dashboard uses fixed utility colors, so this compact override keeps its
   existing layout while giving dark mode a deliberate operations-console feel. */
@@ -54,6 +71,7 @@ body.dark-mode{background:#0b1220!important;color:#e5edf8!important;}
 body.dark-mode aside,body.dark-mode .bg-white{background-color:#111b2d!important;color:#e5edf8!important;border-color:#243550!important;}
 body.dark-mode main{background:#0b1220!important;}
 body.dark-mode .text-\[\#1B2129\],body.dark-mode .text-\[\#191c1e\]{color:#e5edf8!important;}
+body.dark-mode [style*="color:#1B2129"],body.dark-mode [style*="color: #1B2129"]{color:#e5edf8!important;}
 body.dark-mode .text-\[\#5A6372\],body.dark-mode .text-\[\#7D8794\],body.dark-mode .text-\[\#8C95A3\],body.dark-mode .text-\[\#9AA2B1\]{color:#9eb0c8!important;}
 body.dark-mode .border-\[\#E4E7EB\],body.dark-mode .border-\[\#F0F2F5\]{border-color:#243550!important;}
 body.dark-mode .bg-\[\#F7F8FA\],body.dark-mode .bg-\[\#F9FAFB\],body.dark-mode .bg-\[\#F5F7FA\],body.dark-mode .bg-\[\#F2F4F6\],body.dark-mode .bg-\[\#EDEEF0\]{background-color:#17243a!important;}
@@ -63,6 +81,17 @@ body.dark-mode .tour-card{background:#111b2d!important;border-color:#2d527f!impo
 body.dark-mode .tour-card .text-\[\#1B2129\]{color:#f1f6fc!important;}
 body.dark-mode .hover\:bg-\[\#F5F7FA\]:hover,body.dark-mode .hover\:bg-\[\#F9FAFB\]:hover{background-color:#1b2d49!important;}
 body.dark-mode .shadow-sm,body.dark-mode .shadow-xl{box-shadow:0 8px 24px rgba(0,0,0,.24)!important;}
+body.dark-mode .room-map-shell{background:#111b2d!important;border-color:#243550!important;}
+body.dark-mode .room-map-tooltip{background:#17243a!important;border-color:#35547c!important;color:#e5edf8!important;}
+body.dark-mode .drawer-panel{background:#111b2d!important;border-color:#243550!important;}
+body.dark-mode .bg-red-50,body.dark-mode .bg-red-50\/50{background-color:#3a1f2a!important;}
+body.dark-mode .bg-red-100{background-color:#572536!important;}
+body.dark-mode .bg-emerald-100{background-color:#173b35!important;}
+body.dark-mode .bg-gray-50,body.dark-mode .bg-gray-100{background-color:#17243a!important;}
+body.dark-mode .text-gray-400,body.dark-mode .text-gray-500,body.dark-mode .text-gray-600,body.dark-mode .text-gray-700{color:#9eb0c8!important;}
+body.dark-mode .border-gray-100,body.dark-mode .border-gray-200,body.dark-mode .border-gray-300{border-color:#2a3e5f!important;}
+body.dark-mode .ring-white{--tw-ring-color:#111b2d!important;}
+body.dark-mode .dark-map-stage{background:#0f1a2b!important;}
 </style>
 </head>
 <body class="antialiased min-h-screen flex bg-[#F7F8FA] text-[#1B2129] font-['Inter']">
@@ -185,7 +214,7 @@ body.dark-mode .shadow-sm,body.dark-mode .shadow-xl{box-shadow:0 8px 24px rgba(0
   <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
     <div><h1 class="text-[26px] font-bold text-[#1B2129] tracking-tight">Room Operations Matrix</h1><p class="text-[13px] font-medium text-[#7D8794] mt-0.5">Floor plans, turnover status & proactive asset risk alerts</p></div>
     <div class="flex items-center gap-3">
-      <div class="flex items-center gap-2 text-[12px]">
+      <div class="flex items-center justify-end flex-wrap gap-2 text-[12px]">
         <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#3FAE6A]"></span>Ready</span>
         <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#3B7DD8]"></span>Occupied</span>
         <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#E0A93A]"></span>Dirty</span>
@@ -209,6 +238,17 @@ body.dark-mode .shadow-sm,body.dark-mode .shadow-xl{box-shadow:0 8px 24px rgba(0
       <input class="w-64 bg-[#F7F8FA] text-[13px] pl-9 pr-4 py-1.5 rounded-lg border border-[#E4E7EB] text-[#1B2129] placeholder-[#9AA2B1] focus:outline-none focus:bg-white focus:border-[#3B7DD8] transition-all" id="roomSearchInput" placeholder="Filter by room # or type..." type="text" oninput="applyRoomFiltering()"/>
     </div>
   </div>
+  <section class="room-map-shell bg-white rounded-xl border border-[#E4E7EB] shadow-sm overflow-hidden mb-6" aria-label="Interactive 3D room map">
+    <div class="px-5 py-4 border-b border-[#E4E7EB] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div><div class="flex items-center gap-2"><h2 class="text-[15px] font-bold text-[#1B2129]">Property map</h2><span class="px-2 py-0.5 rounded-full bg-[#EAF1FC] text-[#3B7DD8] text-[10px] font-bold uppercase tracking-wider">3D live view</span></div><p class="text-[12px] text-[#7D8794] mt-1">Select a room block to open its live asset telemetry.</p></div>
+      <div class="room-map-legend text-[11px] text-[#7D8794]"><span class="flex items-center gap-1.5"><i class="w-2 h-2 rounded-full bg-[#3FAE6A]"></i>Ready</span><span class="flex items-center gap-1.5"><i class="w-2 h-2 rounded-full bg-[#3B7DD8]"></i>Occupied</span><span class="flex items-center gap-1.5"><i class="w-2 h-2 rounded-full bg-[#E0A93A]"></i>Dirty</span><span class="flex items-center gap-1.5"><i class="w-2 h-2 rounded-full bg-[#DD5A5A]"></i>Blocked</span></div>
+    </div>
+    <div class="relative bg-[#F7F8FA] dark-map-stage" id="roomMapStage">
+      <canvas class="room-map-canvas" id="roomMapCanvas" aria-label="3D interactive map of resort rooms"></canvas>
+      <div class="room-map-tooltip absolute left-4 top-4 z-10 bg-white border border-[#DCE5F2] rounded-lg shadow-lg px-3 py-2 text-[12px]" id="roomMapTooltip"></div>
+      <div class="absolute inset-0 flex items-center justify-center text-sm text-[#7D8794] pointer-events-none" id="roomMapFallback">Loading interactive map...</div>
+    </div>
+  </section>
   <div id="roomGrid" class="space-y-6"></div>
 </div>
 
@@ -505,6 +545,14 @@ function applyTheme(theme){
   document.body.classList.toggle('dark-mode',isDark);
   document.getElementById('themeIcon').textContent=isDark?'light_mode':'dark_mode';
   document.getElementById('themeToggle').setAttribute('aria-label',isDark?'Switch to light mode':'Switch to dark mode');
+  if(typeof _roomMap!=='undefined' && _roomMap){
+    const background=isDark?0x0f1a2b:0xf7f8fa;
+    _roomMap.scene.background.setHex(background);
+    _roomMap.renderer.setClearColor(background,1);
+    _roomMap.ground.material.color.setHex(isDark?0x17243a:0xdbe7f5);
+    _roomMap.grid.material.color.setHex(isDark?0x35547c:0x93acd0);
+    _roomMap.grid.material.vertexColors=false;
+  }
 }
 
 function toggleTheme(){
@@ -597,6 +645,94 @@ window.addEventListener('resize',()=>{if(!document.getElementById('tourCard')?.c
 //  ROOM OPS FILTER & SEARCH STATE
 // ═══════════════════════════════════════════════════════════
 let _currentRoomFilter = 'all';
+let _roomMap = null;
+
+function roomMapStatusColor(room){
+  return new THREE.Color(STATUS_COLORS[room.status] || '#7D8794');
+}
+
+function visibleRoom(room){
+  const term=(document.getElementById('roomSearchInput')?.value || '').toLowerCase().trim();
+  return (_currentRoomFilter==='all' || room.status===_currentRoomFilter || (_currentRoomFilter==='Blocked' && room.has_flagged_asset)) &&
+    (!term || String(room.room_id).includes(term) || room.room_type.toLowerCase().includes(term));
+}
+
+function initRoomMap(){
+  const canvas=document.getElementById('roomMapCanvas');
+  const stage=document.getElementById('roomMapStage');
+  const fallback=document.getElementById('roomMapFallback');
+  if(!canvas || !stage || _roomMap) return;
+  if(!window.THREE){
+    fallback.textContent='Interactive map unavailable. Use the room matrix below.';
+    return;
+  }
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setClearColor(document.body.classList.contains('dark-mode')?0x0f1a2b:0xf7f8fa,1);
+  const scene=new THREE.Scene();
+  scene.background=new THREE.Color(document.body.classList.contains('dark-mode')?0x0f1a2b:0xf7f8fa);
+  const camera=new THREE.PerspectiveCamera(36,1,.1,200);
+  camera.position.set(14,17,22);
+  camera.lookAt(0,1.5,0);
+  scene.add(new THREE.HemisphereLight(0xdbeafe,0x17243a,2.4));
+  const keyLight=new THREE.DirectionalLight(0xffffff,2.2);keyLight.position.set(8,20,12);scene.add(keyLight);
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(24,18),new THREE.MeshStandardMaterial({color:0xdbe7f5,roughness:.88,metalness:.04}));
+  ground.rotation.x=-Math.PI/2;ground.position.y=-.25;scene.add(ground);
+  const grid=new THREE.GridHelper(24,12,0x93acd0,0xc5d4e8);grid.position.y=-.23;scene.add(grid);
+  const group=new THREE.Group();scene.add(group);
+  const raycaster=new THREE.Raycaster();const pointer=new THREE.Vector2();
+  const tooltip=document.getElementById('roomMapTooltip');
+  _roomMap={renderer,scene,camera,group,raycaster,pointer,tooltip,boxes:[],stage,canvas,ground,grid,dragging:false,moved:false,lastX:0,lastY:0,azimuth:0,elevation:.62,distance:30};
+  const resize=()=>{const rect=stage.getBoundingClientRect();if(!rect.width)return;renderer.setSize(rect.width,rect.height,false);camera.aspect=rect.width/rect.height;camera.updateProjectionMatrix();};
+  new ResizeObserver(resize).observe(stage);resize();
+  canvas.addEventListener('pointermove',event=>{if(_roomMap.dragging){const dx=event.clientX-_roomMap.lastX;const dy=event.clientY-_roomMap.lastY;if(Math.abs(dx)+Math.abs(dy)>3)_roomMap.moved=true;_roomMap.azimuth-=dx*.008;_roomMap.elevation=Math.max(.25,Math.min(1.25,_roomMap.elevation+dy*.006));updateRoomMapCamera();}_roomMap.lastX=event.clientX;_roomMap.lastY=event.clientY;roomMapPointer(event,false);});
+  canvas.addEventListener('pointerdown',event=>{_roomMap.dragging=true;_roomMap.moved=false;_roomMap.lastX=event.clientX;_roomMap.lastY=event.clientY;canvas.setPointerCapture(event.pointerId);});
+  canvas.addEventListener('pointerup',event=>{const shouldOpen=!_roomMap.moved;_roomMap.dragging=false;canvas.releasePointerCapture(event.pointerId);if(shouldOpen)roomMapPointer(event,true);});
+  canvas.addEventListener('pointerleave',()=>{_roomMap.dragging=false;_roomMap.tooltip.classList.remove('show');});
+  canvas.addEventListener('wheel',event=>{event.preventDefault();_roomMap.distance=Math.max(16,Math.min(42,_roomMap.distance+event.deltaY*.018));updateRoomMapCamera();},{passive:false});
+  fallback.classList.add('hidden');
+  const animate=()=>{if(!_roomMap)return;renderer.render(scene,camera);requestAnimationFrame(animate);};
+  animate();
+}
+
+function updateRoomMapCamera(){
+  if(!_roomMap)return;
+  const distance=_roomMap.distance;
+  _roomMap.camera.position.set(Math.sin(_roomMap.azimuth)*distance,Math.sin(_roomMap.elevation)*distance,Math.cos(_roomMap.azimuth)*distance);
+  _roomMap.camera.lookAt(0,1.5,0);
+}
+
+function roomMapPointer(event,open){
+  if(!_roomMap || !_roomMap.boxes.length)return;
+  const rect=_roomMap.canvas.getBoundingClientRect();
+  _roomMap.pointer.x=((event.clientX-rect.left)/rect.width)*2-1;
+  _roomMap.pointer.y=-((event.clientY-rect.top)/rect.height)*2+1;
+  _roomMap.raycaster.setFromCamera(_roomMap.pointer,_roomMap.camera);
+  const hit=_roomMap.raycaster.intersectObjects(_roomMap.boxes.filter(box=>visibleRoom(box.userData.room)))[0];
+  if(!hit){_roomMap.tooltip.classList.remove('show');_roomMap.canvas.style.cursor='grab';return;}
+  const room=hit.object.userData.room;_roomMap.canvas.style.cursor='pointer';
+  _roomMap.tooltip.innerHTML=`<strong>Room ${room.room_id}</strong><br><span>${escapeHtml(room.room_type)} · ${escapeHtml(room.status)}</span>`;
+  _roomMap.tooltip.classList.add('show');
+  if(open)openDrawer(room.room_id);
+}
+
+function renderRoomMap(){
+  if(!_roomMap || !_roomsCache.length)return;
+  _roomMap.boxes.forEach(box=>_roomMap.group.remove(box));_roomMap.boxes=[];
+  const boxGeometry=new THREE.BoxGeometry(1.25,.7,1.05);
+  _roomsCache.forEach((room,index)=>{
+    const local=index%30;const floor=room.floor-1;const col=local%6;const row=Math.floor(local/6);
+    const material=new THREE.MeshLambertMaterial({color:roomMapStatusColor(room),transparent:true});
+    const box=new THREE.Mesh(boxGeometry,material);box.position.set((col-2.5)*1.65, floor*1.35 + .15, (row-2)*1.55);box.userData.room=room;box.userData.baseY=box.position.y;
+    box.userData.visible=visibleRoom(room);_roomMap.group.add(box);_roomMap.boxes.push(box);
+  });
+  updateRoomMapFilter();
+}
+
+function updateRoomMapFilter(){
+  if(!_roomMap)return;
+  _roomMap.boxes.forEach(box=>{const active=visibleRoom(box.userData.room);box.material.opacity=active?1:.12;box.scale.y=active?1:.72;box.position.y=box.userData.baseY + (active?0:-.15);});
+}
 
 function filterRoomMatrix(filter){
   _currentRoomFilter = filter;
@@ -640,6 +776,7 @@ function applyRoomFiltering(){
       emptyEl.style.display = (visibleCount === 0) ? 'block' : 'none';
     }
   }
+  updateRoomMapFilter();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -753,7 +890,7 @@ async function renderRoomOps(){
           <h3 class="text-xs font-bold text-[#7D8794] uppercase tracking-wider">Level 0${floor} — ${WINGS[floor]||'Wing '+floor}</h3>
           ${flagged?`<span class="text-xs text-[#DD5A5A] font-medium">${flagged} Critical Flag${flagged>1?'s':''}</span>`:`<span class="text-xs text-[#7D8794]">${floorRooms.length} Rooms</span>`}
         </div>
-        <div class="grid grid-cols-6 xl:grid-cols-10 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-10 gap-3">
           ${floorRooms.map(r=>{
             const isFlagged=r.has_flagged_asset;
             const color=STATUS_COLORS[r.status]||'#7D8794';
@@ -773,6 +910,8 @@ async function renderRoomOps(){
       </div>`;
     }
     document.getElementById('roomGrid').innerHTML=html;
+    initRoomMap();
+    renderRoomMap();
     applyRoomFiltering();
 
   } catch(err) {
