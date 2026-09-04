@@ -1,18 +1,17 @@
-"""
-Resort OS — PEMS Model Training
-Trains a Random Forest classifier on synthetic room-asset data.
+"""Train and select the Resort OS predictive-maintenance model.
 
 Usage:  python ml/train.py
 Input:  ml/training_data.csv
 Output: ml/model.pkl
 """
+import hashlib
 import os
 import pickle
+from datetime import datetime, timezone
+
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
-from sklearn.preprocessing import LabelEncoder
+from sklearn.ensemble import GradientBoostingClassifier, HistGradientBoostingClassifier, RandomForestClassifier
+from sklearn.model_selection import StratifiedKFold, cross_validate
 
 MODEL_DIR = os.path.dirname(__file__)
 DATA_PATH = os.path.join(MODEL_DIR, "training_data.csv")
@@ -30,61 +29,125 @@ TARGET = "failure"
 
 
 def train():
-    # Load data
     df = pd.read_csv(DATA_PATH)
-    print(f"[INFO] Loaded {len(df)} samples from {DATA_PATH}")
-    print(f"       Failure distribution:\n{df[TARGET].value_counts().to_string()}\n")
+    missing = set(NUMERIC_FEATURES + [CATEGORICAL_FEATURE, TARGET]) - set(df.columns)
+    if missing:
+        raise ValueError(f"Training data is missing columns: {sorted(missing)}")
+    if df[NUMERIC_FEATURES + [TARGET]].isnull().any().any():
+        raise ValueError("Training data contains missing numeric or target values")
 
-    # Encode asset_type as one-hot
+    asset_types = sorted(df[CATEGORICAL_FEATURE].dropna().unique().tolist())
+    if not asset_types:
+        raise ValueError("Training data contains no asset types")
+
+    # Keep the encoded schema explicit because the FastAPI inference path uses it.
     df_encoded = pd.get_dummies(df, columns=[CATEGORICAL_FEATURE], prefix="type")
-    feature_cols = NUMERIC_FEATURES + [c for c in df_encoded.columns if c.startswith("type_")]
-
+    type_columns = [f"type_{asset_type}" for asset_type in asset_types]
+    feature_cols = NUMERIC_FEATURES + type_columns
+    for column in type_columns:
+        if column not in df_encoded:
+            df_encoded[column] = 0
     X = df_encoded[feature_cols]
     y = df_encoded[TARGET]
 
-    # Split
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
+    candidates = {
+        "gradient_boosting": GradientBoostingClassifier(
+            n_estimators=250,
+            learning_rate=0.035,
+            max_depth=4,
+            min_samples_leaf=8,
+            subsample=0.85,
+            max_features="sqrt",
+            random_state=42,
+        ),
+        "gradient_boosting_deep": GradientBoostingClassifier(
+            n_estimators=350,
+            learning_rate=0.025,
+            max_depth=3,
+            min_samples_leaf=8,
+            subsample=0.9,
+            random_state=42,
+        ),
+        "hist_gradient_boosting": HistGradientBoostingClassifier(
+            max_iter=250,
+            learning_rate=0.05,
+            max_leaf_nodes=31,
+            l2_regularization=0.5,
+            random_state=42,
+        ),
+        "random_forest": RandomForestClassifier(
+            n_estimators=400,
+            max_depth=None,
+            min_samples_leaf=1,
+            max_features="sqrt",
+            class_weight="balanced",
+            random_state=42,
+            n_jobs=-1,
+        ),
+    }
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    scoring = {
+        "accuracy": "accuracy",
+        "balanced_accuracy": "balanced_accuracy",
+        "roc_auc": "roc_auc",
+        "average_precision": "average_precision",
+        "f1": "f1",
+    }
+    benchmark = {}
+    for name, candidate in candidates.items():
+        scores = cross_validate(candidate, X, y, cv=cv, scoring=scoring, n_jobs=1)
+        benchmark[name] = {
+            metric: round(float(scores[f"test_{metric}"].mean()), 6)
+            for metric in scoring
+        }
+
+    # Accuracy is the primary selection metric; the other metrics make ties deterministic.
+    selected_name = max(
+        benchmark,
+        key=lambda name: (
+            benchmark[name]["accuracy"],
+            benchmark[name]["roc_auc"],
+            benchmark[name]["f1"],
+        ),
     )
+    model = candidates[selected_name]
+    model.fit(X, y)
 
-    # Train Random Forest
-    model = RandomForestClassifier(
-        n_estimators=100,
-        max_depth=12,
-        min_samples_split=5,
-        random_state=42,
-        n_jobs=-1,
-    )
-    model.fit(X_train, y_train)
+    print(f"[INFO] Loaded {len(df)} samples from {DATA_PATH}")
+    print(f"       Failure distribution:\n{y.value_counts().to_string()}\n")
+    print("── 5-fold model benchmark ──")
+    for name, metrics in benchmark.items():
+        print(f"  {name:26s} accuracy={metrics['accuracy']:.4f} roc_auc={metrics['roc_auc']:.4f} f1={metrics['f1']:.4f}")
+    print(f"[INFO] Selected model: {selected_name}")
 
-    # Evaluate
-    y_pred = model.predict(X_test)
-    print("── Classification Report ──")
-    print(classification_report(y_test, y_pred, target_names=["No Failure", "Failure"]))
+    importances = getattr(model, "feature_importances_", None)
+    if importances is not None:
+        print("── Feature Importances ──")
+        for feat, imp in sorted(zip(feature_cols, importances), key=lambda item: item[1], reverse=True):
+            print(f"  {feat:40s} {imp:.4f}")
 
-    # Feature importances
-    importances = sorted(
-        zip(feature_cols, model.feature_importances_),
-        key=lambda x: x[1],
-        reverse=True,
-    )
-    print("── Feature Importances ──")
-    for feat, imp in importances:
-        bar = "█" * int(imp * 50)
-        print(f"  {feat:40s} {imp:.4f}  {bar}")
-
-    # Save model + metadata
     artifact = {
         "model": model,
         "feature_cols": feature_cols,
         "numeric_features": NUMERIC_FEATURES,
-        "asset_types": ["AC", "TV", "Set-top box"],
+        "asset_types": asset_types,
+        "target": TARGET,
+        "classes": model.classes_.tolist(),
+        "failure_class_index": int(list(model.classes_).index(1)),
+        "prediction_threshold": 0.70,
+        "selected_model": selected_name,
+        "cv_metrics": benchmark[selected_name],
+        "all_benchmarks": benchmark,
+        "training_rows": len(df),
+        "training_data_sha256": hashlib.sha256(open(DATA_PATH, "rb").read()).hexdigest(),
+        "trained_at": datetime.now(timezone.utc).isoformat(),
     }
     with open(MODEL_PATH, "wb") as f:
         pickle.dump(artifact, f)
 
     print(f"\n[OK] Model saved → {MODEL_PATH}")
     print(f"     Features: {feature_cols}")
+    print(f"     CV accuracy: {benchmark[selected_name]['accuracy']:.4f}")
 
 
 if __name__ == "__main__":

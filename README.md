@@ -54,6 +54,7 @@ Every single component, endpoint, view, and button has been swept end-to-end and
 
 ### 🧠 Backend & ML Engine (FastAPI + SQLite + Scikit-Learn)
 - [x] **PEMS Predictive Maintenance**: Pre-trained Scikit-Learn classifier (`ml/model.pkl`) evaluating power draw, total usage hours, hours since last service, error log counts, and asset type one-hot encodings.
+- [x] **Reproducible model selection**: `ml/train.py` benchmarks Gradient Boosting, Histogram Gradient Boosting, and Random Forest candidates with stratified 5-fold cross-validation before saving the winner and its metrics.
 - [x] **Property-Wide Telemetry Scan**: `POST /api/pems/scan-all` evaluates all 360 room assets across 120 rooms and dynamically blocks high-risk rooms (e.g. Rooms 204, 317, 412).
 - [x] **Health & Diagnostics**: `GET /api/pems/health` reports model status, feature columns, and GenAI availability.
 - [x] **Rooms Inventory API**: `GET /api/rooms` returns all 120 rooms with statuses (`Ready`, `Occupied`, `Dirty`, `Blocked`, `Arrival`) and `has_flagged_asset` flags.

@@ -601,16 +601,31 @@ def get_dashboard():
 # Load ML model at startup
 _pems_model = None
 _pems_feature_cols = None
+_pems_asset_types = set()
+_pems_failure_class_index = 1
+_pems_prediction_threshold = 0.70
+_pems_metadata = {}
 ML_DIR = os.path.join(os.path.dirname(__file__), "..", "ml")
 
 def _load_pems_model():
-    global _pems_model, _pems_feature_cols
+    global _pems_model, _pems_feature_cols, _pems_asset_types
+    global _pems_failure_class_index, _pems_prediction_threshold, _pems_metadata
     model_path = os.path.join(ML_DIR, "model.pkl")
     if os.path.exists(model_path):
         with open(model_path, "rb") as f:
             artifact = pickle.load(f)
         _pems_model = artifact["model"]
         _pems_feature_cols = artifact["feature_cols"]
+        _pems_asset_types = set(artifact.get("asset_types", []))
+        classes = artifact.get("classes", list(_pems_model.classes_))
+        _pems_failure_class_index = int(artifact.get("failure_class_index", list(classes).index(1)))
+        _pems_prediction_threshold = float(artifact.get("prediction_threshold", 0.70))
+        _pems_metadata = {
+            "selected_model": artifact.get("selected_model"),
+            "cv_metrics": artifact.get("cv_metrics", {}),
+            "training_rows": artifact.get("training_rows"),
+            "trained_at": artifact.get("trained_at"),
+        }
         print(f"[PEMS] Model loaded from {model_path}")
     else:
         print(f"[PEMS] No model found at {model_path} — prediction endpoints will return 503")
@@ -641,6 +656,8 @@ def _predict_risk(asset_type: str, power_draw: float, usage_hours: float,
     """Run prediction through the loaded model. Returns risk probability 0-1."""
     if _pems_model is None:
         return None
+    if _pems_asset_types and asset_type not in _pems_asset_types:
+        raise ValueError(f"Unsupported asset type: {asset_type}")
 
     import pandas as pd
     row = {
@@ -655,12 +672,12 @@ def _predict_risk(asset_type: str, power_draw: float, usage_hours: float,
             row[col] = 1 if col == f"type_{asset_type}" else 0
 
     df = pd.DataFrame([row])[_pems_feature_cols]
-    prob = _pems_model.predict_proba(df)[0][1]  # probability of failure class
+    prob = _pems_model.predict_proba(df)[0][_pems_failure_class_index]
     return float(prob)
 
 
 def _risk_tier(prob: float) -> str:
-    if prob >= 0.70:
+    if prob >= _pems_prediction_threshold:
         return "High"
     elif prob >= 0.40:
         return "Medium"
@@ -673,10 +690,13 @@ async def pems_predict(req: PEMSPredictRequest):
     if _pems_model is None:
         raise HTTPException(503, "PEMS model not loaded. Run ml/train.py first.")
 
-    prob = _predict_risk(
-        req.asset_type, req.power_draw, req.usage_hours,
-        req.operating_hours_since_service, req.error_log_count,
-    )
+    try:
+        prob = _predict_risk(
+            req.asset_type, req.power_draw, req.usage_hours,
+            req.operating_hours_since_service, req.error_log_count,
+        )
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
 
     tier = _risk_tier(prob)
     top_factors = []
@@ -789,6 +809,9 @@ def pems_health():
         "genai_provider": "groq",
         "groq_available": bool(os.environ.get("GROQ_API_KEY")) and _groq_service_available,
         "feature_columns": _pems_feature_cols,
+        "asset_types": sorted(_pems_asset_types),
+        "prediction_threshold": _pems_prediction_threshold,
+        "model_metadata": _pems_metadata,
     }
 
 
