@@ -34,6 +34,10 @@ def seed():
             risk_percent INTEGER NOT NULL DEFAULT 0,
             status      TEXT NOT NULL DEFAULT 'Operational',
             reason      TEXT NOT NULL DEFAULT '',
+            power_draw       REAL NOT NULL DEFAULT 0.0,
+            usage_hours      REAL NOT NULL DEFAULT 0.0,
+            operating_hours_since_service INTEGER NOT NULL DEFAULT 0,
+            error_log_count  INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY (room_id) REFERENCES rooms(room_id)
         )
     """)
@@ -115,36 +119,55 @@ def seed():
     # ── Seed assets (3 per room: AC, TV, Set-top box) ───────────────────
     # Most assets are low risk. Specific rooms get high risk for demo.
     flagged_rooms = {
-        204: {"AC": (87, "Critical", "Power spike detected + service overdue by 40 days. Compressor vibrational frequency anomaly at 10:42 AM — overheating imminent."),
-              "TV": (42, "Warning", "HDMI handshake intermittent failures logged 6 times in 48h. Firmware update pending."),
-              "Set-top box": (8, "Operational", "All telemetry nominal. Last firmware sync 3 days ago.")},
-        317: {"AC": (73, "Critical", "Refrigerant pressure drop detected — 18% below safe threshold. Condenser coil efficiency degraded, likely blockage."),
-              "TV": (15, "Operational", "Display panel within spec. Backlight hours: 4,200 / 60,000."),
-              "Set-top box": (22, "Operational", "Minor network latency spikes during peak hours. Non-critical.")},
-        412: {"AC": (91, "Critical", "Compressor motor current draw 34% above rated capacity. Bearing wear pattern consistent with imminent seizure. Emergency service required."),
-              "TV": (5, "Operational", "All systems nominal."),
-              "Set-top box": (12, "Operational", "Firmware v3.2.1 current. No issues detected.")},
+        204: {"AC": (87, "Critical", "Power spike detected + service overdue by 40 days. Compressor vibrational frequency anomaly at 10:42 AM — overheating imminent.",
+                     0.92, 18.5, 4200, 28),
+              "TV": (42, "Warning", "HDMI handshake intermittent failures logged 6 times in 48h. Firmware update pending.",
+                     0.38, 12.0, 2100, 14),
+              "Set-top box": (8, "Operational", "All telemetry nominal. Last firmware sync 3 days ago.",
+                              0.12, 8.0, 800, 2)},
+        317: {"AC": (73, "Critical", "Refrigerant pressure drop detected — 18% below safe threshold. Condenser coil efficiency degraded, likely blockage.",
+                     0.85, 16.0, 3800, 22),
+              "TV": (15, "Operational", "Display panel within spec. Backlight hours: 4,200 / 60,000.",
+                     0.25, 10.0, 1500, 4),
+              "Set-top box": (22, "Operational", "Minor network latency spikes during peak hours. Non-critical.",
+                              0.18, 9.0, 1200, 6)},
+        412: {"AC": (91, "Critical", "Compressor motor current draw 34% above rated capacity. Bearing wear pattern consistent with imminent seizure. Emergency service required.",
+                     0.96, 20.0, 4800, 35),
+              "TV": (5, "Operational", "All systems nominal.",
+                     0.15, 6.0, 1000, 1),
+              "Set-top box": (12, "Operational", "Firmware v3.2.1 current. No issues detected.",
+                              0.10, 5.0, 600, 1)},
     }
 
     assets_data = []
     for room_id, floor, wing, room_type, status, flagged in rooms_data:
         if room_id in flagged_rooms:
-            for asset_type, (risk, ast_status, reason) in flagged_rooms[room_id].items():
-                assets_data.append((room_id, asset_type, risk, ast_status, reason))
+            for asset_type, (risk, ast_status, reason, pd, uh, oh, ec) in flagged_rooms[room_id].items():
+                assets_data.append((room_id, asset_type, risk, ast_status, reason, pd, uh, oh, ec))
         else:
-            # Normal assets with low risk
+            # Normal assets with low risk and nominal sensor values
             ac_risk = random.randint(2, 25)
             tv_risk = random.randint(1, 18)
             stb_risk = random.randint(1, 12)
+            ac_pd = round(random.uniform(0.20, 0.55), 3)
+            tv_pd = round(random.uniform(0.10, 0.35), 3)
+            stb_pd = round(random.uniform(0.05, 0.20), 3)
+            ac_oh = random.randint(100, 2000)
+            tv_oh = random.randint(100, 1800)
+            stb_oh = random.randint(50, 1500)
             assets_data.append((room_id, "AC", ac_risk, "Operational",
-                              f"Routine operation. Last serviced {random.randint(5,90)} days ago."))
+                              f"Routine operation. Last serviced {random.randint(5,90)} days ago.",
+                              ac_pd, round(random.uniform(4.0, 14.0), 1), ac_oh, random.randint(0, 6)))
             assets_data.append((room_id, "TV", tv_risk, "Operational",
-                              f"Display panel within spec. Backlight hours: {random.randint(1000,8000):,} / 60,000."))
+                              f"Display panel within spec. Backlight hours: {random.randint(1000,8000):,} / 60,000.",
+                              tv_pd, round(random.uniform(2.0, 12.0), 1), tv_oh, random.randint(0, 4)))
             assets_data.append((room_id, "Set-top box", stb_risk, "Operational",
-                              f"Firmware current. Uptime: {random.randint(10,180)} days."))
+                              f"Firmware current. Uptime: {random.randint(10,180)} days.",
+                              stb_pd, round(random.uniform(2.0, 10.0), 1), stb_oh, random.randint(0, 3)))
 
-    c.executemany("INSERT INTO assets (room_id, asset_type, risk_percent, status, reason) VALUES (?,?,?,?,?)",
-                  assets_data)
+    c.executemany(
+        "INSERT INTO assets (room_id, asset_type, risk_percent, status, reason, power_draw, usage_hours, operating_hours_since_service, error_log_count) VALUES (?,?,?,?,?,?,?,?,?)",
+        assets_data)
 
     # Mark flagged rooms as Blocked + has_flagged_asset
     for room_id in flagged_rooms:
