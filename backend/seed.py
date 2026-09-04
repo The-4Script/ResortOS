@@ -3,6 +3,7 @@ Resort OS — seed.py
 Seeds the SQLite database with 120 rooms, assets, staff, and guest requests.
 Run once: python seed.py
 """
+import argparse
 import sqlite3, os, random
 
 DB_PATH = os.environ.get(
@@ -10,8 +11,11 @@ DB_PATH = os.environ.get(
     os.path.join(os.path.dirname(__file__), "resort.db"),
 )
 
-def seed():
+def seed(force=False):
     if os.path.exists(DB_PATH):
+        if not force:
+            print(f"[SKIP] Database already exists at {DB_PATH}; use --force to rebuild it")
+            return
         os.remove(DB_PATH)
 
     conn = sqlite3.connect(DB_PATH)
@@ -226,4 +230,10 @@ def seed():
     print(f"  - 120 rooms, {len(assets_data)} assets, {len(staff_data)} departments, {len(guest_requests_data)} guest requests")
 
 if __name__ == "__main__":
-    seed()
+    parser = argparse.ArgumentParser(description="Seed the Resort OS SQLite database")
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="delete and rebuild the existing database",
+    )
+    seed(force=parser.parse_args().force)

@@ -1,3 +1,9 @@
+---
+title: Resort OS
+sdk: docker
+app_port: 7860
+---
+
 # Resort OS — Smart Resort 360
 
 > **Connected Intelligence Platform for Autonomous Luxury Resort Operations**  
@@ -154,6 +160,24 @@ If the variable is absent or Groq is unavailable, the existing deterministic
 local recommendations/templates are used.
 
 ### Live deployment
+
+#### Hugging Face Spaces
+
+1. Create a new Space at [huggingface.co/new-space](https://huggingface.co/new-space).
+2. Choose **Docker** as the Space SDK and select the hardware you need.
+3. Set the Space visibility, then copy the Space Git URL.
+4. Add the Space as a remote and push this repository:
+
+```bash
+git remote add space https://huggingface.co/spaces/<your-username>/<your-space>
+git push space main
+```
+
+5. In **Settings > Variables and secrets**, add `GROQ_API_KEY` as a secret if AI-generated responses are required. The app works without it using local fallback recommendations.
+6. In **Settings > Storage**, attach persistent storage. The app is configured to use `/data/resort.db` when `DATABASE_PATH=/data/resort.db` is set. Without attached storage, database changes are lost when the Space restarts or rebuilds.
+7. In **Settings > Variables**, set `DATABASE_PATH` to `/data/resort.db`, then restart the Space. Open `/login` on the resulting `https://<your-space>.hf.space` URL.
+
+The container listens on port `7860`, and the Space metadata at the top of this file selects the Docker runtime automatically. The database seeds itself only when the configured database file is absent. To intentionally rebuild it locally, run `python backend/seed.py --force`; do not run that command against a live persistent database unless a reset is wanted.
 
 This repository includes a [`Dockerfile`](./Dockerfile) and
 [`render.yaml`](./render.yaml) for Render. Render is the simplest option for
