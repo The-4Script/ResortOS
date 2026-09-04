@@ -59,7 +59,7 @@ tailwind.config = { theme: { extend: {
     <form class="flex flex-col gap-4" id="loginForm">
       <div class="flex flex-col gap-1">
         <label class="text-xs font-medium text-secondary" for="email">Work email or staff ID</label>
-        <input class="w-full text-sm rounded-lg px-3 py-2 bg-[#f2f4f6] focus:bg-white focus:outline-none border border-transparent focus:border-primary transition-colors" id="email" type="text" value="a.morgan@grandresort.internal"/>
+        <input class="w-full text-sm rounded-lg px-3 py-2 bg-[#f2f4f6] focus:bg-white focus:outline-none border border-transparent focus:border-primary transition-colors" id="email" name="username" type="text" value="a.morgan@grandresort.internal" autocomplete="username" required/>
       </div>
       <div class="flex flex-col gap-1">
         <div class="flex items-center justify-between">
@@ -67,7 +67,7 @@ tailwind.config = { theme: { extend: {
           <a class="text-[11px] font-medium text-primary hover:text-primary-container transition-colors" href="#">Forgot password?</a>
         </div>
         <div class="relative flex items-center">
-          <input class="w-full text-sm rounded-lg px-3 py-2 bg-[#f2f4f6] focus:bg-white focus:outline-none border border-transparent focus:border-primary tracking-widest font-['IBM_Plex_Mono'] transition-colors" id="password" type="password" value="••••••••••••"/>
+          <input class="w-full text-sm rounded-lg px-3 py-2 bg-[#f2f4f6] focus:bg-white focus:outline-none border border-transparent focus:border-primary tracking-widest font-['IBM_Plex_Mono'] transition-colors" id="password" name="password" type="password" value="ResortOS!2025" autocomplete="current-password" required/>
           <button class="absolute right-2 p-1 text-secondary hover:text-on-surface transition-colors" type="button" onclick="togglePwd()">
             <span class="material-symbols-outlined text-[18px]" id="pwdIcon">visibility</span>
           </button>

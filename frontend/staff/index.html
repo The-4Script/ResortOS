@@ -41,6 +41,11 @@ tailwind.config={darkMode:"class",theme:{extend:{colors:{
 .nav-link{transition:all .15s;}
 .toast{transform:translateY(20px);opacity:0;pointer-events:none;transition:all .3s;}
 .toast.show{transform:translateY(0);opacity:1;pointer-events:auto;}
+.tour-backdrop{opacity:0;pointer-events:none;transition:opacity .2s;}
+.tour-backdrop.open{opacity:1;pointer-events:auto;}
+.tour-spotlight{position:fixed;z-index:61;border:2px solid #3B7DD8;border-radius:12px;box-shadow:0 0 0 9999px rgba(15,20,23,.48),0 0 0 5px rgba(59,125,216,.18);pointer-events:none;transition:all .25s ease;}
+.tour-card{position:fixed;z-index:62;width:min(380px,calc(100vw - 32px));transition:all .25s ease;}
+@media(max-width:640px){.tour-spotlight{display:none;}.tour-card{left:16px!important;right:16px;bottom:16px;top:auto!important;width:auto;}}
 </style>
 </head>
 <body class="antialiased min-h-screen flex bg-[#F7F8FA] text-[#1B2129] font-['Inter']">
@@ -93,6 +98,9 @@ tailwind.config={darkMode:"class",theme:{extend:{colors:{
       </div>
     </div>
   </div>
+  <button class="w-full mt-2 px-2 py-2 rounded-lg text-[12px] font-semibold text-[#5A6372] hover:bg-[#F5F7FA] hover:text-[#1B2129] transition-colors flex items-center justify-center gap-1.5" onclick="startTour(true)">
+    <span class="material-symbols-outlined text-[16px]">help</span><span>Replay quick tour</span>
+  </button>
 </div>
 </aside>
 
@@ -370,6 +378,29 @@ tailwind.config={darkMode:"class",theme:{extend:{colors:{
   <span class="text-[13px] font-medium" id="toastMsg">Action completed</span>
 </div>
 
+<!-- First-visit product tour -->
+<div class="tour-backdrop fixed inset-0 z-[60] bg-transparent" id="tourBackdrop" aria-hidden="true"></div>
+<div class="tour-spotlight" id="tourSpotlight" aria-hidden="true"></div>
+<section class="tour-card hidden bg-white rounded-2xl border border-[#DCE5F2] shadow-[0_18px_55px_rgba(15,20,23,.22)] p-5" id="tourCard" role="dialog" aria-modal="true" aria-labelledby="tourTitle">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <p class="text-[11px] font-bold uppercase tracking-[.12em] text-[#3B7DD8]" id="tourStep">Welcome</p>
+      <h2 class="mt-1 text-[18px] font-bold text-[#1B2129]" id="tourTitle">Resort OS in one minute</h2>
+    </div>
+    <button class="shrink-0 p-1 rounded-md text-[#7D8794] hover:bg-[#F5F7FA] hover:text-[#1B2129]" onclick="skipTour()" aria-label="Close tour">
+      <span class="material-symbols-outlined text-[19px]">close</span>
+    </button>
+  </div>
+  <p class="mt-3 text-[13px] leading-5 text-[#5A6372]" id="tourBody"></p>
+  <div class="mt-5 flex items-center justify-between gap-3">
+    <button class="text-[12px] font-semibold text-[#7D8794] hover:text-[#1B2129]" onclick="skipTour()">Skip tour</button>
+    <div class="flex items-center gap-2">
+      <button class="px-3 py-2 rounded-lg border border-[#E4E7EB] text-[12px] font-semibold text-[#5A6372] hover:bg-[#F5F7FA]" id="tourBack" onclick="previousTourStep()">Back</button>
+      <button class="px-3.5 py-2 rounded-lg bg-[#3B7DD8] text-white text-[12px] font-semibold hover:bg-[#2C6EC9]" id="tourNext" onclick="nextTourStep()">Next</button>
+    </div>
+  </div>
+</section>
+
 </main>
 
 <script>
@@ -441,6 +472,78 @@ function showToast(msg){
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2500);
 }
+
+// ── First-visit guided tour ──
+const TOUR_KEY = 'resortOsStaffTourCompleted';
+const TOUR_STEPS = [
+  {target:'#dashCards', title:'Your daily control panel', body:'These four numbers give managers a quick read on occupancy, rooms needing attention, staffing, and revenue. Click a card to jump into that work area.'},
+  {target:'#activityList', title:'Follow what changed', body:'Recent activity explains the important events behind the numbers, such as a risky room asset, a guest request, or a staffing gap.'},
+  {target:'[data-page="roomops"]', title:'Inspect every room', body:'Room Ops is your live room matrix. Filter by status, open a room, review asset risk, and mark a room resolved when the issue is fixed.'},
+  {target:'[data-page="guests"]', title:'Turn requests into service', body:'Guest requests arrive here with operational context. The concierge creates a recommendation and staff can review it before sending it to the guest.'},
+  {target:'[data-page="revenue"]', title:'Connect operations to revenue', body:'Revenue uses room availability and blocked inventory to suggest rate adjustments. Staff and revenue views keep the property decision in one place.'}
+];
+let _tourIndex = 0;
+
+function positionTour(){
+  const step=TOUR_STEPS[_tourIndex];
+  const target=document.querySelector(step.target);
+  const spotlight=document.getElementById('tourSpotlight');
+  const card=document.getElementById('tourCard');
+  if(!target || !spotlight || !card) return;
+  const rect=target.getBoundingClientRect();
+  const pad=6;
+  spotlight.style.left=`${Math.max(8,rect.left-pad)}px`;
+  spotlight.style.top=`${Math.max(8,rect.top-pad)}px`;
+  spotlight.style.width=`${rect.width+pad*2}px`;
+  spotlight.style.height=`${rect.height+pad*2}px`;
+  const cardWidth=Math.min(380,window.innerWidth-32);
+  const left=Math.min(Math.max(16,rect.left),window.innerWidth-cardWidth-16);
+  const top=rect.bottom+18+card.offsetHeight<=window.innerHeight?rect.bottom+18:Math.max(16,rect.top-card.offsetHeight-18);
+  card.style.left=`${left}px`;
+  card.style.top=`${top}px`;
+}
+
+function renderTourStep(){
+  const step=TOUR_STEPS[_tourIndex];
+  document.getElementById('tourStep').textContent=`Step ${_tourIndex+1} of ${TOUR_STEPS.length}`;
+  document.getElementById('tourTitle').textContent=step.title;
+  document.getElementById('tourBody').textContent=step.body;
+  document.getElementById('tourBack').disabled=_tourIndex===0;
+  document.getElementById('tourBack').classList.toggle('opacity-40',_tourIndex===0);
+  document.getElementById('tourNext').textContent=_tourIndex===TOUR_STEPS.length-1?'Done':'Next';
+  requestAnimationFrame(positionTour);
+}
+
+function startTour(force=false){
+  if(!force && localStorage.getItem(TOUR_KEY)) return;
+  _tourIndex=0;
+  const backdrop=document.getElementById('tourBackdrop');
+  const card=document.getElementById('tourCard');
+  backdrop.classList.add('open');
+  backdrop.setAttribute('aria-hidden','false');
+  card.classList.remove('hidden');
+  renderTourStep();
+}
+
+function nextTourStep(){
+  if(_tourIndex>=TOUR_STEPS.length-1){skipTour();return;}
+  _tourIndex+=1;
+  renderTourStep();
+}
+
+function previousTourStep(){
+  if(_tourIndex===0)return;
+  _tourIndex-=1;
+  renderTourStep();
+}
+
+function skipTour(){
+  localStorage.setItem(TOUR_KEY,'true');
+  document.getElementById('tourBackdrop').classList.remove('open');
+  document.getElementById('tourBackdrop').setAttribute('aria-hidden','true');
+  document.getElementById('tourCard').classList.add('hidden');
+}
+window.addEventListener('resize',()=>{if(!document.getElementById('tourCard')?.classList.contains('hidden'))positionTour();});
 
 // ═══════════════════════════════════════════════════════════
 //  DASHBOARD (Task 3 — live from GET /api/dashboard)
@@ -1061,6 +1164,7 @@ async function init(){
     renderGuests(),
     renderRevenue()
   ]);
+  startTour();
 }
 document.addEventListener('DOMContentLoaded',init);
 </script>
