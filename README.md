@@ -4,302 +4,363 @@ sdk: docker
 app_port: 7860
 ---
 
-# Resort OS — Smart Resort 360
+# Resort OS
 
-> **Connected Intelligence Platform for Autonomous Luxury Resort Operations**  
-> *Hackathon PS4: Smart Resort 360 — Built by Team The 4Script*
+> **Predict the room problem before the guest experiences it.**
 
-Resort OS is an enterprise-grade hospitality operating system that eliminates operational silos by uniting **predictive asset maintenance (PEMS)**, **turnover & room matrix operations**, **algorithmic yield revenue management**, **occupancy-driven staff scheduling**, and **AI-powered guest concierge dispatch** into a unified, reactive command center.
+**Resort OS** is a connected intelligence platform for resort operations. Its
+unique feature is **PEMS (Predictive Equipment Monitoring System)**: a room-level
+machine-learning layer that turns asset telemetry into an operational decision.
 
----
-
-## 🌟 The Connected Intelligence Chain
-
-Most hospitality dashboards operate in isolation. Resort OS connects all modules into a reactive causal chain:
+PEMS does not stop at predicting that an AC, TV, or set-top box may fail. It
+connects that prediction to the rest of the property:
 
 ```mermaid
 flowchart LR
-    subgraph IoT["1. IoT Telemetry & ML"]
-        Sensors["Asset Sensors (Power, Hours, Errors)"] --> PEMS["PEMS ML Risk Engine (model.pkl)"]
+    A[Room asset telemetry] --> B[PEMS risk prediction]
+    B --> C{Risk >= 70%?}
+    C -->|Yes| D[Block room from allocation]
+    D --> E[Protect guest experience]
+    D --> F[Update available inventory]
+    F --> G[Recalculate revenue signal]
+    D --> H[Prioritize maintenance dispatch]
+    H --> I[Staff command center]
+```
+
+That closed loop is what makes Resort OS different from a conventional hotel
+dashboard or a standalone predictive-maintenance model. **The model predicts;
+the operating system acts; the team remains in control.**
+
+Built for Hackathon Problem Statement 4, Smart Resort 360, by **The 4Script**.
+
+---
+
+## Why PEMS Is the Differentiator
+
+Most resort software reports room status after a problem has already affected
+housekeeping, front desk, engineering, or a guest. Most predictive-maintenance
+prototypes end with a probability score. PEMS connects both worlds.
+
+### The PEMS operational loop
+
+1. **Observe**: read power draw, usage hours, operating hours since service,
+   error-log count, and asset type for every monitored room asset.
+2. **Predict**: score the probability of failure with the trained model loaded
+   once at backend startup.
+3. **Explain**: return a risk tier, contributing factors, and a concise
+   maintenance explanation. GenAI is optional and never replaces the model.
+4. **Protect**: when any asset reaches High risk (`>= 70%`), mark its room as
+   `Blocked` and set it as excluded from allocation.
+5. **Coordinate**: surface the issue to room operations, maintenance dispatch,
+   inventory and revenue workflows so the property responds as one system.
+6. **Resolve**: a staff member verifies the repair and can return the room to
+   service with an explicit resolution action.
+
+### What makes this hard to fake
+
+- **Room-aware, not just asset-aware**: one critical AC can protect an entire
+  room from being sold before arrival.
+- **Operational consequences are immediate**: the prediction changes the live
+  room matrix and inventory signal.
+- **Explainable by design**: staff see the telemetry behind the risk instead of
+  an unexplained model score.
+- **Human approval remains mandatory**: PEMS recommends and protects; staff
+  resolve and release rooms.
+- **Graceful without an API key**: deterministic local explanations keep the
+  full demo functional when Groq is unavailable.
+
+---
+
+## The Connected Resort Intelligence Chain
+
+```mermaid
+flowchart TB
+    subgraph PEMS[PEMS predictive maintenance]
+        Sensors[AC, TV, set-top box telemetry] --> Model[ML risk classifier]
+        Model --> Explain[Risk tier and maintenance explanation]
     end
 
-    subgraph Ops["2. Room Operations"]
-        PEMS -->|"Risk >= 70%"| Block["Auto-Block Room & Exclude from Allocation"]
-        Block --> Grid["120-Key Matrix Live Update"]
+    subgraph Operations[Resort operations]
+        Explain --> RoomLock[Block affected room]
+        RoomLock --> Matrix[120-key room matrix]
+        Matrix --> Housekeeping[Turnover and engineering dispatch]
+        Matrix --> Revenue[Inventory and scarcity pricing]
+        Housekeeping --> Staff[Occupancy-driven staff allocation]
     end
 
-    subgraph Rev["3. Revenue Engine"]
-        Block -->|"Reduced Available Inventory"| Scarcity["Scarcity Rate Optimization (+2% per Blocked Key)"]
-        Scarcity --> PMS["PMS & Channel Manager Broadcast"]
-    end
-
-    subgraph Service["4. Staff & Guest Ops"]
-        Grid --> Turnover["Housekeeping Turnover Allocation"]
-        Turnover --> Staff["Dynamic Shift Optimization (38/46 Active)"]
-        Staff --> Concierge["AI Guest Concierge (Context-Aware Dispatch)"]
+    subgraph Experience[Guest experience]
+        Revenue --> Concierge[Context-aware AI concierge]
+        Staff --> Concierge
     end
 ```
 
-1. **Predictive IoT Telemetry**: Telemetry from room assets (AC, TV, STB) is processed by an embedded **PEMS ML classifier**.
-2. **Proactive Room Blocking**: Any critical asset failure risk ($\ge 70\%$) immediately marks the room as `Blocked` and sets `excluded_from_allocation = true` to prevent front-desk booking errors.
-3. **Yield Management & Scarcity Pricing**: Blocked inventory reduces available capacity. The revenue engine immediately recalibrates dynamic ADR rates ($+2\%$ per blocked room of that category).
-4. **Staff Dynamic Balancing**: Room turnover status drives departmental allocations across 5 sectors to prevent housekeeping bottlenecks.
-5. **AI Guest Concierge Dispatch**: Guest requests are evaluated against live resort occupancy, kitchen load, and staffing levels to generate optimal recommendations.
+PEMS is the trigger that makes the modules reactive rather than isolated:
+
+- A critical asset risk blocks a room before front-desk allocation.
+- Blocked inventory becomes an input to the revenue recommendation.
+- Room and turnover changes inform staffing coverage.
+- The staff console provides the engineering and guest-service context in one
+  place.
 
 ---
 
-## ✅ Verified MVP Capabilities
+## Verified MVP Capabilities
 
-Every single component, endpoint, view, and button has been swept end-to-end and verified with zero console errors.
+### PEMS predictive maintenance
 
-### 🧠 Backend & ML Engine (FastAPI + SQLite + Scikit-Learn)
-- [x] **PEMS Predictive Maintenance**: Pre-trained Scikit-Learn classifier (`ml/model.pkl`) evaluating power draw, total usage hours, hours since last service, error log counts, and asset type one-hot encodings.
-- [x] **Reproducible model selection**: `ml/train.py` benchmarks Gradient Boosting, Histogram Gradient Boosting, and Random Forest candidates with stratified 5-fold cross-validation before saving the winner and its metrics.
-- [x] **Property-Wide Telemetry Scan**: `POST /api/pems/scan-all` evaluates all 360 room assets across 120 rooms and dynamically blocks high-risk rooms (e.g. Rooms 204, 317, 412).
-- [x] **Health & Diagnostics**: `GET /api/pems/health` reports model status, feature columns, and GenAI availability.
-- [x] **Rooms Inventory API**: `GET /api/rooms` returns all 120 rooms with statuses (`Ready`, `Occupied`, `Dirty`, `Blocked`, `Arrival`) and `has_flagged_asset` flags.
-- [x] **Room Detail Telemetry API**: `GET /api/rooms/{id}` returns individual asset risks, operational reasons, and allocation exclusion status.
-- [x] **Occupancy Staffing API**: `GET /api/staff` returns real-time occupancy benchmark, active vs recommended headcount, and departmental coverage gaps.
-- [x] **Yield Revenue API**: `GET /api/revenue` computes dynamic pricing recommendations with property-wide scarcity reasoning.
-- [x] **Executive Dashboard API**: `GET /api/dashboard` aggregates real-time property health, occupancy percentage, turnover counts, and revenue signals.
-- [x] **AI Concierge API**: `POST /api/concierge` provides context-aware dining, spa, and activity recommendations with automated triage queue logging.
-- [x] **Guest Queue API**: `GET /api/guest-requests` delivers live triage feed for staff dispatch.
-- [x] **Database Seeding**: `backend/seed.py` creates 120 rooms, 360 assets, 5 departments, and guest request queue.
+- Scans **360 assets across 120 rooms**: AC units, TVs, and set-top boxes.
+- Uses `power_draw`, `usage_hours`, `operating_hours_since_service`,
+  `error_log_count`, and one-hot encoded `asset_type` features.
+- Benchmarks Gradient Boosting, Histogram Gradient Boosting, and Random Forest
+  candidates with stratified five-fold cross-validation.
+- Loads the selected serialized model from `ml/model.pkl` once at startup.
+- Classifies risk as Low, Medium, or High. High risk starts at the persisted
+  prediction threshold of `0.70`.
+- Stores asset risk percentage, status, and explanation in SQLite during a
+  property-wide scan.
+- Automatically blocks rooms with a High-risk asset and releases only rooms
+  whose flagged asset risk has cleared.
+- Provides single-asset prediction and model-health endpoints for integration
+  and diagnostics.
 
----
+### Staff operations command center
 
-### 🖥️ Staff Operations Hub (Unified SPA)
-- [x] **Authentication Screen (`/login`)**:
-  - Pre-filled General Manager credentials (Alex Morgan).
-  - Password visibility toggle (`password` $\leftrightarrow$ `text`).
-  - Animated authentication spinner and auto-redirect to `/dashboard#dashboard`.
-- [x] **Executive Dashboard (`#dashboard`)**:
-  - 4 Live Stat Cards (Occupancy, Rooms Needing Attention, Staff Status, Revenue Signal) wired directly to navigation tabs.
-  - Interactive Donut Chart showing real-time distribution across all 120 keys.
-  - Recent Activity Feed with direct drill-down links (e.g., clicking Room 204 opens its drawer).
-  - Header search and maintenance alert notification bell with visual toast feedback.
-- [x] **120-Key Room Operations Matrix (`#roomops`)**:
-  - Multi-floor grid representing Levels 01 to 04 (Lobby, Garden, Ocean, and Penthouse wings).
-  - Real-time status indicators (Ready: Green, Occupied: Blue, Dirty: Amber, Blocked: Red, Arrival: Orange).
-  - Interactive Filter Tabs: **All Rooms**, **Blocked / Critical**, **Ready**, **Occupied**, **Dirty**, **Arrival**.
-  - Real-time room number and category search bar.
-  - Interactive Asset Telemetry Drawer: sliding right drawer with asset health telemetry (AC, TV, STB), risk gauge charts, and failure diagnosis.
-  - **Mark Resolved Action**: Session-persisted room clearance updating room status to Ready and adjusting property-wide blocked counters.
-  - **Assign Technician Action**: Automated dispatch notification with toast confirmation.
-- [x] **Staff Department Allocations (`#staff`)**:
-  - Live occupancy benchmark banner (39% live, 38 / 46 active staff, -8 deficit).
-  - 5 Sector Allocation Cards: Housekeeping, Front Desk & Concierge, Kitchen & Culinary, Facilities & Engineering, Spa & Wellness.
-  - Visual coverage progress bars and headcount deficit indicators.
-  - **Auto-adjust shifts**: Interactive shift balancing animation and optimization toast.
-  - **Export roster**: Roster generation feedback and download confirmation toast.
-  - Sector-specific action buttons: Reassign, Call backup pool, and View roster.
-- [x] **Guest Concierge Triage Queue (`#guests`)**:
-  - Live triage feed displaying guest requests, operational context, and pre-composed recommendations.
-  - Synchronized Filter Tabs: **All Requests**, **Pending Review**, **Sent**.
-  - Real-time text search filtering across guest names and room inquiries.
-  - **Send to guest**: Flips status badge from Pending to Sent, updates action row to "Sent just now by Alex Morgan", and displays confirmation toast.
-  - Interactive **Edit response** and **View message** inspection modals.
-- [x] **Algorithmic Revenue Management (`#revenue`)**:
-  - Dynamic Rate Optimization Hero Card with target category, suggested adjustment, base rate, and suggested rate.
-  - Scarcity reasoning explicitly tracking category and property-wide blocked keys.
-  - Yield Pulse sidebar comparing portfolio RevPAR, ADR, and committed keys.
-  - **Apply adjustment**: Broadcasts rate change to PMS and Channel Manager with green status update.
-  - **Dismiss**: Dims recommendation card and disables action for 4 hours.
-  - 5-Category Breakdown Table (Standard, Deluxe, Deluxe AC, Suite, Penthouse) with inventory and occupancy progress.
+- Executive dashboard with occupancy, rooms needing attention, staff status,
+  revenue signal, and recent activity.
+- 120-key room matrix with floor, status, search, and risk filters.
+- Room detail drawer with asset telemetry, risk gauges, failure diagnosis,
+  allocation exclusion state, technician dispatch, and resolution action.
+- Occupancy-based staffing view with department coverage and shift balancing.
+- Guest request triage queue synchronized with the guest-facing concierge.
+- Revenue view with scarcity reasoning and a guarded rate-adjustment workflow.
+
+### Guest-facing concierge
+
+- Mobile-friendly guest experience at `/guest?room=203`.
+- Natural-language requests for dining, spa, activities, late checkout, and
+  transport.
+- Recommendations use resort context and are copied into the staff triage queue.
+- Groq-generated responses are optional; local keyword-based recommendations
+  provide a deterministic fallback.
 
 ---
 
-### 📱 Guest-Facing AI Concierge (`/guest?room=203`)
-- [x] Standalone guest chat interface parameterized by URL query (`?room=203`).
-- [x] Animated three-dot typing indicator simulating concierge review.
-- [x] Pre-configured quick request chips:
-  - 🍽️ *Dinner reservation* (Mare Nostrum 7:30 PM off-peak dining recommendation).
-  - 💆 *Spa booking* (Lagoon Cabana couples deep tissue massage).
-  - ⏰ *Late checkout* (12:30 PM complimentary buffer checkout).
-  - 🚗 *Airport transfer* (Private luxury hybrid shuttle pickup).
-  - 🏊 *Pool & activities* (Cabana reservation & sunset yoga).
-- [x] Free-form natural language query submission with live responses from `/api/concierge`.
-- [x] Automated bidirectional synchronization into the staff triage queue.
+## Architecture
 
----
+```mermaid
+sequenceDiagram
+    participant Engineer
+    participant UI as Staff dashboard
+    participant API as FastAPI
+    participant PEMS as PEMS model
+    participant DB as SQLite
+    participant AI as Optional Groq explanation
 
-## 📐 System Architecture & Directory Structure
-
+    Engineer->>UI: Run PEMS scan
+    UI->>API: POST /api/pems/scan-all
+    API->>PEMS: Score all room assets
+    PEMS-->>API: Probability and risk tier
+    API->>AI: Explain maintenance signal when configured
+    AI-->>API: Scoped explanation or local fallback
+    API->>DB: Save risk state and block High-risk rooms
+    API-->>UI: Updated rooms and blocked-room list
+    Engineer->>UI: Inspect, dispatch, or resolve
+    UI->>API: Staff action
+    API->>DB: Persist operational decision
 ```
-resortos/
+
+**Design rules:**
+
+- The frontend never touches SQLite directly; it uses the API.
+- PEMS is the source of truth for risk; GenAI only explains it.
+- The model is loaded once and is never retrained per request.
+- No room is automatically repaired or released without a staff action.
+
+### Repository structure
+
+```text
+ResortOS/
 ├── backend/
-│   ├── main.py              # FastAPI app — all 9 API endpoints + static file routing
-│   ├── seed.py              # SQLite database seeder (120 keys, 360 assets, 5 depts)
-│   ├── resort.db            # Local SQLite database (use a mounted volume in production)
-│   └── requirements.txt     # fastapi, uvicorn, scikit-learn, pydantic
+│   ├── main.py              # FastAPI app and PEMS inference endpoints
+│   ├── seed.py              # Seeds 120 rooms, 360 assets, departments, and requests
+│   ├── requirements.txt     # Runtime dependencies
+│   └── resort.db            # Local SQLite database after first run
 ├── frontend/
-│   ├── staff/
-│   │   ├── login.html       # Authentication workstation screen
-│   │   └── index.html       # Staff Operations Command Center SPA (5 views)
-│   └── guest/
-│       └── index.html       # Guest AI Concierge Chat UI
+│   ├── staff/login.html     # Staff sign-in
+│   ├── staff/index.html     # Staff operations command center
+│   └── guest/index.html     # Guest concierge
 ├── ml/
-│   ├── model.pkl            # Pre-trained PEMS predictive risk classifier
-│   ├── train.py             # Random forest training pipeline
-│   ├── data_generator.py    # Synthetic IoT sensor stream generator
-│   └── genai_service.py     # Groq explanation adapter
-├── walkthrough.md           # End-to-end verification and audit log
-└── README.md                # System documentation
+│   ├── model.pkl            # Trained PEMS model artifact
+│   ├── train.py             # Model benchmarking and training
+│   ├── data_generator.py    # Synthetic room-asset telemetry generator
+│   ├── training_data.csv    # Training data
+│   └── genai_service.py     # Maintenance explanation adapter
+├── Dockerfile
+├── render.yaml
+└── README.md
 ```
 
-### Groq configuration
+---
 
-The app uses Groq's OpenAI-compatible streaming API with model
-`openai/gpt-oss-120b` for concierge and maintenance explanations. Set the key
-only as a server-side environment variable; never commit it to the repository:
+## Quick Start
+
+### Prerequisites
+
+- Python 3.10+
+- Optional: a Groq API key for live AI explanations
+
+### Run locally
+
+```bash
+git clone https://github.com/The-4Script/ResortOS.git
+cd ResortOS/backend
+pip install -r requirements.txt
+python seed.py
+python -m uvicorn main:app --reload --port 8000
+```
+
+The database is created automatically when it does not exist. To intentionally
+rebuild it locally, run `python seed.py --force`.
+
+### Run the PEMS scan
+
+In another terminal:
+
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/pems/scan-all" -Method Post
+```
+
+Or with curl:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/pems/scan-all
+```
+
+The response includes the number of assets updated and the room IDs blocked by
+High-risk assets. The seeded demo highlights Rooms 204, 317, and 412.
+
+### Retrain the PEMS model
+
+The repository includes a trained artifact. To regenerate synthetic data and
+train a new artifact:
+
+```bash
+python ml/data_generator.py
+python ml/train.py
+```
+
+The training script evaluates candidate classifiers and writes `ml/model.pkl`.
+
+---
+
+## Application URLs
+
+| Interface | URL | Purpose |
+|---|---|---|
+| Staff sign-in | `http://localhost:8000/login` | Enter the operations console |
+| Executive dashboard | `http://localhost:8000/dashboard#dashboard` | Property-wide KPIs and activity |
+| Room operations | `http://localhost:8000/dashboard#roomops` | 120-key matrix and PEMS room locks |
+| Staff allocations | `http://localhost:8000/dashboard#staff` | Department coverage and shifts |
+| Guest queue | `http://localhost:8000/dashboard#guests` | Concierge dispatch workflow |
+| Revenue optimization | `http://localhost:8000/dashboard#revenue` | Inventory and rate signals |
+| Guest concierge | `http://localhost:8000/guest?room=203` | Guest request experience |
+| API documentation | `http://localhost:8000/docs` | FastAPI Swagger UI |
+
+---
+
+## API Reference
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `GET` | `/api/pems/health` | PEMS model, features, threshold, and GenAI status |
+| `POST` | `/api/pems/predict` | Predict risk for one room asset |
+| `POST` | `/api/pems/scan-all` | Score all 360 assets and block High-risk rooms |
+| `GET` | `/api/dashboard` | Aggregated property statistics |
+| `GET` | `/api/rooms` | Room status and flagged-asset state |
+| `GET` | `/api/rooms/{id}` | Room assets, telemetry, and allocation state |
+| `POST` | `/api/rooms/{id}/resolve` | Record resolution and return a room to service |
+| `POST` | `/api/rooms/{id}/dispatch` | Record technician dispatch |
+| `GET` | `/api/staff` | Staffing recommendations and coverage gaps |
+| `GET` | `/api/revenue` | Revenue and scarcity recommendations |
+| `POST` | `/api/revenue/apply` | Apply a proposed rate adjustment |
+| `POST` | `/api/concierge` | Generate a guest recommendation and queue it |
+| `GET` | `/api/guest-requests` | Guest triage queue |
+| `PATCH` | `/api/guest-requests/{id}` | Update guest request status or response |
+| `POST` | `/api/staff/actions` | Persist a staffing action |
+| `POST` | `/api/auth/login` | Validate demo staff credentials |
+
+---
+
+## GenAI Guardrails
+
+PEMS remains useful without GenAI. When configured, Groq turns the structured
+prediction into a concise explanation for operations staff using only the
+maintenance fields needed for that explanation.
 
 ```bash
 GROQ_API_KEY=gsk_...
 ```
 
-If the variable is absent or Groq is unavailable, the existing deterministic
-local recommendations/templates are used.
+The maintenance prompt is scoped to AC, TV, and set-top box upkeep. It does not
+make allocation, repair, or replacement decisions. Missing keys, API failures,
+or invalid responses fall back to deterministic local templates.
 
-### Live deployment
-
-#### Hugging Face Spaces
-
-1. Create a new Space at [huggingface.co/new-space](https://huggingface.co/new-space).
-2. Choose **Docker** as the Space SDK and select the hardware you need.
-3. Set the Space visibility, then copy the Space Git URL.
-4. Add the Space as a remote and push this repository:
-
-```bash
-git remote add space https://huggingface.co/spaces/<your-username>/<your-space>
-git push space main
-```
-
-5. In **Settings > Variables and secrets**, add `GROQ_API_KEY` as a secret if AI-generated responses are required. The app works without it using local fallback recommendations.
-6. In **Settings > Storage**, attach persistent storage. The app is configured to use `/data/resort.db` when `DATABASE_PATH=/data/resort.db` is set. Without attached storage, database changes are lost when the Space restarts or rebuilds.
-7. In **Settings > Variables**, set `DATABASE_PATH` to `/data/resort.db`, then restart the Space. Open `/login` on the resulting `https://<your-space>.hf.space` URL.
-
-The container listens on port `7860`, and the Space metadata at the top of this file selects the Docker runtime automatically. The database seeds itself only when the configured database file is absent. To intentionally rebuild it locally, run `python backend/seed.py --force`; do not run that command against a live persistent database unless a reset is wanted.
-
-This repository includes a [`Dockerfile`](./Dockerfile) and
-[`render.yaml`](./render.yaml) for Render. Render is the simplest option for
-this single FastAPI service: create a Blueprint from the repository, add
-`GROQ_API_KEY` in the dashboard, and deploy. The included 1 GB persistent disk
-mounts SQLite at `/data/resort.db`, so guest requests and status changes survive
-restarts. Persistent disks require a paid Render web service.
-
-Railway with a mounted volume or Fly.io with a volume are also suitable. Do not
-use an ephemeral filesystem for production SQLite, because redeploys will erase
-the database. For multiple production instances, migrate SQLite to PostgreSQL
-instead; SQLite on one mounted volume is intended for a single service instance.
+For deployment, set `GROQ_API_KEY` as a server-side secret and configure
+`DATABASE_PATH=/data/resort.db` when using persistent storage. Never commit the
+API key or use ephemeral storage for a production SQLite database.
 
 ---
 
-## 🚀 Quick Start
+## Demo Flow
 
-### 1. Prerequisites
-- Python 3.10+
-- Node.js (optional, for script testing)
+1. Open `/login` and enter the prefilled demo credentials.
+2. Open **Room Operations** and run the PEMS scan.
+3. Filter **Blocked / Critical** and inspect Room 204's AC telemetry.
+4. Show that the room is excluded from allocation because PEMS found a
+   critical asset risk.
+5. Open **Revenue Optimization** and show the inventory/scarcity response.
+6. Dispatch a technician, then use **Mark resolved** to return the room to
+   service.
+7. Open the guest concierge, submit a request, and show the synchronized staff
+   triage item.
 
-### 2. Installation & Server Startup
-
-```bash
-# Clone the repository
-git clone https://github.com/The-4Script/ResortOS.git
-cd resortos/backend
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Seed the database (creates 120 rooms, 360 assets, 5 depts)
-python seed.py
-
-# Start the backend server
-python -m uvicorn main:app --reload --port 8000
-```
-
-### 3. Initialize Live PEMS Asset Telemetry
-
-In another terminal, trigger the PEMS ML pipeline scan across all room assets:
-
-```bash
-# Windows PowerShell
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/pems/scan-all" -Method Post
-
-# macOS / Linux / curl
-curl -X POST http://127.0.0.1:8000/api/pems/scan-all
-```
-
-*Result:* `{"assets_updated": 360, "rooms_blocked": 3, "blocked_room_ids": [204, 317, 412]}`
+The key demonstration is not simply that PEMS predicts failure. It is that one
+prediction travels through the property operating system and prevents a guest-
+facing failure before it becomes a service incident.
 
 ---
 
-## 🌐 Application URLs
+## Deployment
 
-| Interface | URL | Purpose |
-|---|---|---|
-| **Staff Sign-In** | [`http://localhost:8000/login`](http://localhost:8000/login) | Workstation login & credentials |
-| **Executive Dashboard** | [`http://localhost:8000/dashboard#dashboard`](http://localhost:8000/dashboard#dashboard) | Property KPI overview & activity |
-| **Room Operations** | [`http://localhost:8000/dashboard#roomops`](http://localhost:8000/dashboard#roomops) | 120-key matrix, filters, drawer |
-| **Staff Allocations** | [`http://localhost:8000/dashboard#staff`](http://localhost:8000/dashboard#staff) | Shift balancing & roster management |
-| **Guest Queue** | [`http://localhost:8000/dashboard#guests`](http://localhost:8000/dashboard#guests) | AI recommendation dispatch queue |
-| **Revenue Optimization** | [`http://localhost:8000/dashboard#revenue`](http://localhost:8000/dashboard#revenue) | Dynamic pricing & yield guardrails |
-| **Guest Concierge** | [`http://localhost:8000/guest?room=203`](http://localhost:8000/guest?room=203) | Guest-facing mobile concierge chat |
-| **API Documentation** | [`http://localhost:8000/docs`](http://localhost:8000/docs) | Interactive Swagger API docs |
+The repository includes [`Dockerfile`](./Dockerfile) and
+[`render.yaml`](./render.yaml). The container listens on port `7860` for
+Hugging Face Spaces and uses the configured FastAPI service for Render.
 
----
-
-## 🔌 API Reference Summary
-
-### Core Endpoints
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/dashboard` | Aggregated property statistics (occupancy, attention keys, staff, signal). |
-| `GET` | `/api/rooms` | Array of 120 rooms with turnover status and fault flags. |
-| `GET` | `/api/rooms/{id}` | Room details with asset sensor telemetry (AC, TV, STB) and exclusion flag. |
-| `POST` | `/api/rooms/{id}/resolve` | Persist a staff-confirmed room resolution and return it to Ready status. |
-| `GET` | `/api/staff` | Departmental allocations, recommended headcount, and coverage gaps. |
-| `GET` | `/api/revenue` | Algorithmic rate adjustments per room type based on occupancy and scarcity. |
-| `POST` | `/api/concierge` | AI recommendation generation and automatic staff triage logging. |
-| `GET` | `/api/guest-requests` | Feed of guest requests with recommendations and dispatch statuses. |
-| `POST` | `/api/pems/scan-all` | Runs ML predictive maintenance across all 360 assets and auto-blocks high-risk rooms. |
-| `GET` | `/api/pems/health` | Diagnostic endpoint checking ML model availability and feature columns. |
-| `POST` | `/api/auth/login` | Validates the demo staff credentials for the operations console. |
-| `POST` | `/api/rooms/{id}/dispatch` | Records a technician dispatch for a room. |
-| `PATCH` | `/api/guest-requests/{id}` | Persists guest request status and response edits. |
-| `POST` | `/api/revenue/apply` | Persists a proposed rate adjustment in the revenue ledger. |
-| `POST` | `/api/staff/actions` | Records staffing operations initiated from the console. |
+For Hugging Face Spaces, choose the Docker SDK, push the repository, add
+`GROQ_API_KEY` as a secret if needed, attach persistent storage, and set
+`DATABASE_PATH=/data/resort.db`. The same persistent-database requirement
+applies to Render, Railway, and Fly.io. For multiple service instances,
+migrate SQLite to PostgreSQL.
 
 ---
 
-## 🎬 3-Minute Demo Walkthrough Guide
+## Security and Scope
 
-Follow this sequence for an optimal live demonstration:
-
-1. **Sign In**: Visit `/login`, click **Sign in to console** $\rightarrow$ smooth transition into `/dashboard`.
-2. **Review High-Level Metrics**: Point out the live **Occupancy (39%)**, **Rooms Needing Attention (10)**, and the **Revenue Signal (+4%)**.
-3. **Inspect the Room Matrix**:
-   - Navigate to `#roomops`.
-   - Click the **Blocked / Critical** filter tab $\rightarrow$ isolates the 6 blocked rooms (including PEMS-flagged 204, 317, 412).
-   - Click **Room 204** $\rightarrow$ inspect the drawer showing **AC Unit at 87% Critical Risk**.
-   - Click **Mark resolved** $\rightarrow$ room transitions to Ready, drawer closes, and dashboard counter drops.
-4. **Demonstrate Dynamic Revenue Response**:
-   - Navigate to `#revenue`.
-   - Show how the hero card highlights Deluxe scarcity pricing triggered by blocked room count.
-   - Click **Apply adjustment** $\rightarrow$ status updates to "Applied to PMS".
-5. **Demonstrate Guest AI Concierge & Live Dispatch**:
-   - Open `/guest?room=203` in a new window.
-   - Click **Dinner reservation** $\rightarrow$ AI concierge recommends Mare Nostrum at 7:30 PM with operational rationale.
-   - Switch to `#guests` in the staff console $\rightarrow$ the request is already logged in the queue.
-   - Click **Send to guest** $\rightarrow$ card flips to "Sent" status with Alex Morgan's timestamp.
-6. **Balance Staffing**:
-   - Navigate to `#staff`.
-   - Click **Auto-adjust shifts** $\rightarrow$ shift optimization executes with live visual feedback.
+- All included telemetry and guest data is synthetic.
+- API keys are server-side environment variables only.
+- Pydantic request models and explicit feature schemas validate inputs.
+- The database is not exposed directly to the browser.
+- Predictions and operational changes are persisted for auditability.
+- Write endpoints are unauthenticated in this MVP and require authentication
+  before production use.
 
 ---
 
-## 👥 The Team
+## Team
 
-**The 4Script**
-- Developed for Hackathon Problem Statement 4: *Smart Resort 360*
-- License: MIT
+**The 4Script** built Resort OS for Hackathon Problem Statement 4:
+**Smart Resort 360**.
+
+License: MIT
+
+> **Predict early. Protect the room. Let the team decide.**
