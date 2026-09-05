@@ -1,19 +1,66 @@
+
+<div align="center">
+
+<pre style="display: inline-block; text-align: left; font-weight: bold; background: none; border: none; padding: 0;">
+ ██████╗ ███████╗███████╗ ██████╗ ██████╗ ████████╗     ██████╗ ███████╗
+ ██╔══██╗██╔════╝██╔════╝██╔═══██╗██╔══██╗╚══██╔══╝    ██╔═══██╗██╔════╝
+ ██████╔╝█████╗  ███████╗██║   ██║██████╔╝   ██║       ██║   ██║███████╗
+ ██╔══██╗██╔══╝  ╚════██║██║   ██║██╔══██╗   ██║       ██║   ██║╚════██║
+ ██║  ██║███████╗███████║╚██████╔╝██║  ██║   ██║       ╚██████╔╝███████║
+ ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝        ╚═════╝ ╚══════╝
+</pre>
+
+<br>
+
+**Predict the room problem before the guest experiences it.**
+
+[![Version](https://img.shields.io/badge/version-MVP-orange?style=flat-square)](#)
+[![License](https://img.shields.io/badge/license-MIT-black?style=flat-square)](#license)
+[![Model](https://img.shields.io/badge/model-Gradient%20Boosting-orange?style=flat-square)](ml/train.py)
+[![Backend](https://img.shields.io/badge/backend-FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)](backend)
+[![DB](https://img.shields.io/badge/database-SQLite-black?style=flat-square&logo=sqlite&logoColor=white)](#)
+[![GenAI](https://img.shields.io/badge/GenAI-Groq-F55036?style=flat-square&logo=OpenAI&logoColor=white)](#-genai-guardrails)
+[![Docker](https://img.shields.io/badge/deploy-Docker-2496ED?style=flat-square&logo=docker&logoColor=white)](Dockerfile)
+
+*Built for Hackathon Problem Statement 4 — Smart Resort 360 — by The 4Script*
+
+</div>
+
 ---
-title: Resort OS
-sdk: docker
-app_port: 7860
+
+## 🔥 The Problem
+
+Resort assets fail without warning. A dead AC or set-top box discovered after
+check-in means a guest complaint, an emergency dispatch, and a room pulled
+from service mid-stay — all more expensive and more visible than a scheduled
+fix would have been.
+
+**PEMS fixes this.** It watches room asset telemetry, tells engineering
+*which* assets are at risk *before* they fail, explains *why* in plain
+language, and blocks the room from being sold until it's safe. The staff stay
+in control — the model only recommends and protects.
+
 ---
 
-# Resort OS
+## ✨ What It Does
 
-> **Predict the room problem before the guest experiences it.**
+PEMS is the predictive layer inside a full resort operations platform — a
+closed loop from sensor to staff action.
 
-**Resort OS** is a connected intelligence platform for resort operations. Its
-unique feature is **PEMS (Predictive Equipment Monitoring System)**: a room-level
-machine-learning layer that turns asset telemetry into an operational decision.
-
-PEMS does not stop at predicting that an AC, TV, or set-top box may fail. It
-connects that prediction to the rest of the property:
+1. **Observes** — power draw, usage hours, operating hours since service,
+   error-log count, and asset type for every monitored AC, TV, and set-top box
+2. **Predicts** — scores failure probability with a model trained via
+   stratified five-fold cross-validation across Gradient Boosting, Histogram
+   Gradient Boosting, and Random Forest candidates
+3. **Explains (guardrailed)** — Groq turns the raw prediction into a concise
+   maintenance explanation, with a deterministic local fallback if no API key
+   is configured
+4. **Protects** — any asset at **High risk** (`≥ 70%`) blocks its room from
+   allocation immediately
+5. **Coordinates** — the block ripples into inventory, revenue, and staffing
+   in the same operating system
+6. **Resolves** — an engineer verifies the repair and releases the room with
+   an explicit resolution action
 
 ```mermaid
 flowchart LR
@@ -27,125 +74,50 @@ flowchart LR
     H --> I[Staff command center]
 ```
 
-That closed loop is what makes Resort OS different from a conventional hotel
-dashboard or a standalone predictive-maintenance model. **The model predicts;
-the operating system acts; the team remains in control.**
-
-Built for Hackathon Problem Statement 4, Smart Resort 360, by **The 4Script**.
+One scan. Blocked rooms flagged instantly. Plain-language reasoning. Guest
+experience protected. Human always resolves.
 
 ---
 
-## Why PEMS Is the Differentiator
-
-Most resort software reports room status after a problem has already affected
-housekeeping, front desk, engineering, or a guest. Most predictive-maintenance
-prototypes end with a probability score. PEMS connects both worlds.
-
-### The PEMS operational loop
-
-1. **Observe**: read power draw, usage hours, operating hours since service,
-   error-log count, and asset type for every monitored room asset.
-2. **Predict**: score the probability of failure with the trained model loaded
-   once at backend startup.
-3. **Explain**: return a risk tier, contributing factors, and a concise
-   maintenance explanation. GenAI is optional and never replaces the model.
-4. **Protect**: when any asset reaches High risk (`>= 70%`), mark its room as
-   `Blocked` and set it as excluded from allocation.
-5. **Coordinate**: surface the issue to room operations, maintenance dispatch,
-   inventory and revenue workflows so the property responds as one system.
-6. **Resolve**: a staff member verifies the repair and can return the room to
-   service with an explicit resolution action.
-
-### What makes this hard to fake
-
-- **Room-aware, not just asset-aware**: one critical AC can protect an entire
-  room from being sold before arrival.
-- **Operational consequences are immediate**: the prediction changes the live
-  room matrix and inventory signal.
-- **Explainable by design**: staff see the telemetry behind the risk instead of
-  an unexplained model score.
-- **Human approval remains mandatory**: PEMS recommends and protects; staff
-  resolve and release rooms.
-- **Graceful without an API key**: deterministic local explanations keep the
-  full demo functional when Groq is unavailable.
-
----
-
-## The Connected Resort Intelligence Chain
+## 🏗️ Architecture
 
 ```mermaid
-flowchart TB
-    subgraph PEMS[PEMS predictive maintenance]
-        Sensors[AC, TV, set-top box telemetry] --> Model[ML risk classifier]
-        Model --> Explain[Risk tier and maintenance explanation]
+graph TB
+    subgraph "Offline: ML Pipeline"
+        A["Synthetic Telemetry Generator<br/>(ml/data_generator.py)"]
+        B[("training_data.csv<br/>360 assets, 120 rooms")]
+        C["Benchmark + Train<br/>(ml/train.py)"]
+        D[("model.pkl")]
     end
 
-    subgraph Operations[Resort operations]
-        Explain --> RoomLock[Block affected room]
-        RoomLock --> Matrix[120-key room matrix]
-        Matrix --> Housekeeping[Turnover and engineering dispatch]
-        Matrix --> Revenue[Inventory and scarcity pricing]
-        Housekeeping --> Staff[Occupancy-driven staff allocation]
+    subgraph "Runtime: FastAPI Backend"
+        E["POST /api/pems/scan-all<br/>score every asset"]
+        F["main.py<br/>PEMS inference"]
+        G[("SQLite<br/>rooms + assets + activity")]
+        H["genai_service.py<br/>Groq + guardrails"]
     end
 
-    subgraph Experience[Guest experience]
-        Revenue --> Concierge[Context-aware AI concierge]
-        Staff --> Concierge
+    subgraph "User's Browser"
+        J["Staff dashboard<br/>(frontend/staff)"]
+        K["Guest concierge<br/>(frontend/guest)"]
     end
+
+    A --> B --> C --> D
+    D --> F
+    J -->|"Run PEMS scan"| E --> F
+    F --> G
+    F -->|"risk tier + explanation"| J
+    F -->|"scoped prompt"| H --> F
+    K -->|"guest request"| G --> J
+    J -->|"Dispatch / Resolve"| L["Human-in-the-loop decision"]
 ```
 
-PEMS is the trigger that makes the modules reactive rather than isolated:
+**Three golden rules:**
+- The **frontend never touches SQLite** — only through the API.
+- **PEMS is the source of truth for risk** — GenAI only explains it.
+- The **model loads once at startup** — never retrained per request.
 
-- A critical asset risk blocks a room before front-desk allocation.
-- Blocked inventory becomes an input to the revenue recommendation.
-- Room and turnover changes inform staffing coverage.
-- The staff console provides the engineering and guest-service context in one
-  place.
-
----
-
-## Verified MVP Capabilities
-
-### PEMS predictive maintenance
-
-- Scans **360 assets across 120 rooms**: AC units, TVs, and set-top boxes.
-- Uses `power_draw`, `usage_hours`, `operating_hours_since_service`,
-  `error_log_count`, and one-hot encoded `asset_type` features.
-- Benchmarks Gradient Boosting, Histogram Gradient Boosting, and Random Forest
-  candidates with stratified five-fold cross-validation.
-- Loads the selected serialized model from `ml/model.pkl` once at startup.
-- Classifies risk as Low, Medium, or High. High risk starts at the persisted
-  prediction threshold of `0.70`.
-- Stores asset risk percentage, status, and explanation in SQLite during a
-  property-wide scan.
-- Automatically blocks rooms with a High-risk asset and releases only rooms
-  whose flagged asset risk has cleared.
-- Provides single-asset prediction and model-health endpoints for integration
-  and diagnostics.
-
-### Staff operations command center
-
-- Executive dashboard with occupancy, rooms needing attention, staff status,
-  revenue signal, and recent activity.
-- 120-key room matrix with floor, status, search, and risk filters.
-- Room detail drawer with asset telemetry, risk gauges, failure diagnosis,
-  allocation exclusion state, technician dispatch, and resolution action.
-- Occupancy-based staffing view with department coverage and shift balancing.
-- Guest request triage queue synchronized with the guest-facing concierge.
-- Revenue view with scarcity reasoning and a guarded rate-adjustment workflow.
-
-### Guest-facing concierge
-
-- Mobile-friendly guest experience at `/guest?room=203`.
-- Natural-language requests for dining, spa, activities, late checkout, and
-  transport.
-- Recommendations use resort context and are copied into the staff triage queue.
-- Groq-generated responses are optional; local keyword-based recommendations
-  provide a deterministic fallback.
-
----
-
-## Architecture
+### Request flow
 
 ```mermaid
 sequenceDiagram
@@ -154,7 +126,7 @@ sequenceDiagram
     participant API as FastAPI
     participant PEMS as PEMS model
     participant DB as SQLite
-    participant AI as Optional Groq explanation
+    participant AI as Groq (guardrailed)
 
     Engineer->>UI: Run PEMS scan
     UI->>API: POST /api/pems/scan-all
@@ -169,14 +141,157 @@ sequenceDiagram
     API->>DB: Persist operational decision
 ```
 
-**Design rules:**
+---
 
-- The frontend never touches SQLite directly; it uses the API.
-- PEMS is the source of truth for risk; GenAI only explains it.
-- The model is loaded once and is never retrained per request.
-- No room is automatically repaired or released without a staff action.
+## 📊 Model Performance
 
-### Repository structure
+Benchmarked with stratified five-fold cross-validation across three
+candidates; the best performer is serialized to `ml/model.pkl`:
+
+| Candidate | Role |
+|---|---|
+| Gradient Boosting | Benchmark candidate |
+| Histogram Gradient Boosting | Benchmark candidate |
+| Random Forest | Benchmark candidate |
+
+| Setting | Value |
+|---|---|
+| Risk threshold (High) | `≥ 0.70` |
+| Assets scanned | 360 (across 120 rooms) |
+| Asset types | AC, TV, Set-top box |
+| Features | `power_draw`, `usage_hours`, `operating_hours_since_service`, `error_log_count`, one-hot `asset_type` |
+
+> ⚠️ Training data is synthetic, generated to reflect realistic degradation
+> patterns — reported as a design sanity check, not a real-world guarantee.
+
+---
+
+## 🔁 The Connected Resort Intelligence Chain
+
+PEMS is the trigger that makes every other module reactive instead of
+isolated:
+
+- A critical asset risk blocks a room **before** front-desk allocation.
+- Blocked inventory becomes an input to the revenue recommendation.
+- Room and turnover changes inform staffing coverage.
+- The staff console surfaces engineering and guest-service context in one place.
+
+---
+
+## ✅ Verified MVP Capabilities
+
+### 🔧 PEMS Predictive Maintenance
+- Scans **360 assets across 120 rooms**: AC units, TVs, and set-top boxes.
+- Classifies risk as **Low**, **Medium**, or **High** at the persisted `0.70` threshold.
+- Stores asset risk percentage, status, and explanation in SQLite during a property-wide scan.
+- Automatically blocks rooms with a High-risk asset and releases only rooms whose flagged asset risk has cleared.
+- Provides single-asset prediction and model-health endpoints for integration and diagnostics.
+
+### 🖥️ Staff Operations Command Center
+- Executive dashboard with occupancy, rooms needing attention, staff status, revenue signal, and recent activity.
+- 120-key room matrix with floor, status, search, and risk filters.
+- Room detail drawer with asset telemetry, risk gauges, failure diagnosis, allocation exclusion state, technician dispatch, and resolution action.
+- Occupancy-based staffing view with department coverage and shift balancing.
+- Guest request triage queue synchronized with the guest-facing concierge.
+- Revenue view with scarcity reasoning and a guarded rate-adjustment workflow.
+
+### 🛎️ Guest-Facing Concierge
+- Mobile-friendly guest experience at `/guest?room=203`.
+- Natural-language requests for dining, spa, activities, late checkout, and transport.
+- Recommendations use resort context and are copied into the staff triage queue.
+- Groq-generated responses are optional; local keyword-based recommendations provide a deterministic fallback.
+
+---
+
+## 🔌 GenAI Integration — Guardrailed by Design
+
+Groq's **only job** is to turn a structured PEMS prediction into a concise
+maintenance explanation. It never predicts or decides.
+
+| Guardrail | Implementation |
+|---|---|
+| **Scope lock** | Prompt scoped to AC, TV, and set-top box maintenance |
+| **Decision boundary** | Explains only — no allocation, repair, or replacement decisions |
+| **Safe fallback** | Missing key, API failure, or invalid response → deterministic local template |
+| **Minimal data sent** | Only the maintenance fields needed for the explanation — never raw DB rows |
+| **Human-in-the-loop** | Staff dispatch and resolve — PEMS and Groq never act on their own |
+
+```bash
+GROQ_API_KEY=gsk_...
+```
+
+---
+
+## ⚡ Quick Start
+
+### Prerequisites
+- Python 3.10+
+- Optional: a Groq API key for live AI explanations
+
+### Clone & install
+```bash
+git clone https://github.com/The-4Script/ResortOS.git
+cd ResortOS/backend
+pip install -r requirements.txt
+```
+
+### 1 — seed the database
+```bash
+python seed.py
+```
+> The database is created automatically when it does not exist. To
+> intentionally rebuild it, run `python seed.py --force`.
+
+### 2 — start the backend
+```bash
+python -m uvicorn main:app --reload --port 8000
+```
+Backend runs at `http://127.0.0.1:8000` · interactive docs at `http://127.0.0.1:8000/docs`
+
+### 3 — run the PEMS scan
+```bash
+curl -X POST http://127.0.0.1:8000/api/pems/scan-all
+```
+Or with PowerShell:
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/pems/scan-all" -Method Post
+```
+The response includes the number of assets updated and the room IDs blocked by
+High-risk assets. The seeded demo highlights **Rooms 204, 317, and 412**.
+
+### 4 — (optional) regenerate data + retrain the model
+```bash
+python ml/data_generator.py
+python ml/train.py
+```
+> The repo already ships with a trained artifact at `ml/model.pkl` — this step
+> is only needed to regenerate from scratch.
+
+### GenAI setup
+```bash
+GROQ_API_KEY=gsk_your_key_here
+```
+Without a key, the app automatically falls back to deterministic local
+explanations — the demo still works end-to-end.
+
+---
+
+## 🌐 Application URLs
+
+| Interface | URL | Purpose |
+|---|---|---|
+| Staff sign-in | `http://localhost:8000/login` | Enter the operations console |
+| Executive dashboard | `http://localhost:8000/dashboard#dashboard` | Property-wide KPIs and activity |
+| Room operations | `http://localhost:8000/dashboard#roomops` | 120-key matrix and PEMS room locks |
+| Staff allocations | `http://localhost:8000/dashboard#staff` | Department coverage and shifts |
+| Guest queue | `http://localhost:8000/dashboard#guests` | Concierge dispatch workflow |
+| Revenue optimization | `http://localhost:8000/dashboard#revenue` | Inventory and rate signals |
+| Guest concierge | `http://localhost:8000/guest?room=203` | Guest request experience |
+| API documentation | `http://localhost:8000/docs` | FastAPI Swagger UI |
+
+---
+
+## 📂 Repository Structure
 
 ```text
 ResortOS/
@@ -202,73 +317,7 @@ ResortOS/
 
 ---
 
-## Quick Start
-
-### Prerequisites
-
-- Python 3.10+
-- Optional: a Groq API key for live AI explanations
-
-### Run locally
-
-```bash
-git clone https://github.com/The-4Script/ResortOS.git
-cd ResortOS/backend
-pip install -r requirements.txt
-python seed.py
-python -m uvicorn main:app --reload --port 8000
-```
-
-The database is created automatically when it does not exist. To intentionally
-rebuild it locally, run `python seed.py --force`.
-
-### Run the PEMS scan
-
-In another terminal:
-
-```powershell
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/pems/scan-all" -Method Post
-```
-
-Or with curl:
-
-```bash
-curl -X POST http://127.0.0.1:8000/api/pems/scan-all
-```
-
-The response includes the number of assets updated and the room IDs blocked by
-High-risk assets. The seeded demo highlights Rooms 204, 317, and 412.
-
-### Retrain the PEMS model
-
-The repository includes a trained artifact. To regenerate synthetic data and
-train a new artifact:
-
-```bash
-python ml/data_generator.py
-python ml/train.py
-```
-
-The training script evaluates candidate classifiers and writes `ml/model.pkl`.
-
----
-
-## Application URLs
-
-| Interface | URL | Purpose |
-|---|---|---|
-| Staff sign-in | `http://localhost:8000/login` | Enter the operations console |
-| Executive dashboard | `http://localhost:8000/dashboard#dashboard` | Property-wide KPIs and activity |
-| Room operations | `http://localhost:8000/dashboard#roomops` | 120-key matrix and PEMS room locks |
-| Staff allocations | `http://localhost:8000/dashboard#staff` | Department coverage and shifts |
-| Guest queue | `http://localhost:8000/dashboard#guests` | Concierge dispatch workflow |
-| Revenue optimization | `http://localhost:8000/dashboard#revenue` | Inventory and rate signals |
-| Guest concierge | `http://localhost:8000/guest?room=203` | Guest request experience |
-| API documentation | `http://localhost:8000/docs` | FastAPI Swagger UI |
-
----
-
-## API Reference
+## 🔌 API Reference
 
 | Method | Endpoint | Purpose |
 |---|---|---|
@@ -289,29 +338,24 @@ The training script evaluates candidate classifiers and writes `ml/model.pkl`.
 | `POST` | `/api/staff/actions` | Persist a staffing action |
 | `POST` | `/api/auth/login` | Validate demo staff credentials |
 
----
-
-## GenAI Guardrails
-
-PEMS remains useful without GenAI. When configured, Groq turns the structured
-prediction into a concise explanation for operations staff using only the
-maintenance fields needed for that explanation.
-
-```bash
-GROQ_API_KEY=gsk_...
-```
-
-The maintenance prompt is scoped to AC, TV, and set-top box upkeep. It does not
-make allocation, repair, or replacement decisions. Missing keys, API failures,
-or invalid responses fall back to deterministic local templates.
-
-For deployment, set `GROQ_API_KEY` as a server-side secret and configure
-`DATABASE_PATH=/data/resort.db` when using persistent storage. Never commit the
-API key or use ephemeral storage for a production SQLite database.
+Interactive docs (try-it-out) live at `http://127.0.0.1:8000/docs`.
 
 ---
 
-## Demo Flow
+## 🧰 Built With
+
+| Tool | Role |
+|---|---|
+| [scikit-learn](https://scikit-learn.org) | PEMS model benchmarking + training |
+| [FastAPI](https://fastapi.tiangolo.com) | REST API, validation, auto-docs |
+| SQLite | Persistent storage — rooms, assets, activity |
+| [Groq](https://groq.com) | GenAI explanation layer (guardrailed) |
+| Vanilla JS + HTML/CSS | Staff and guest frontends, no build step |
+| Docker | Container for Hugging Face Spaces / Render |
+
+---
+
+## 🎬 Demo Flow
 
 1. Open `/login` and enter the prefilled demo credentials.
 2. Open **Room Operations** and run the PEMS scan.
@@ -324,43 +368,52 @@ API key or use ephemeral storage for a production SQLite database.
 7. Open the guest concierge, submit a request, and show the synchronized staff
    triage item.
 
-The key demonstration is not simply that PEMS predicts failure. It is that one
-prediction travels through the property operating system and prevents a guest-
-facing failure before it becomes a service incident.
+> The key demonstration is not simply that PEMS predicts failure. It's that
+> one prediction travels through the property operating system and prevents a
+> guest-facing failure before it becomes a service incident.
 
 ---
 
-## Deployment
+## 📦 Deployment
 
 The repository includes [`Dockerfile`](./Dockerfile) and
 [`render.yaml`](./render.yaml). The container listens on port `7860` for
 Hugging Face Spaces and uses the configured FastAPI service for Render.
 
-For Hugging Face Spaces, choose the Docker SDK, push the repository, add
+For **Hugging Face Spaces**: choose the Docker SDK, push the repository, add
 `GROQ_API_KEY` as a secret if needed, attach persistent storage, and set
-`DATABASE_PATH=/data/resort.db`. The same persistent-database requirement
-applies to Render, Railway, and Fly.io. For multiple service instances,
-migrate SQLite to PostgreSQL.
+`DATABASE_PATH=/data/resort.db`.
+
+The same persistent-database requirement applies to **Render**, **Railway**,
+and **Fly.io**. For multiple service instances, migrate SQLite to PostgreSQL.
 
 ---
 
-## Security and Scope
+## 🔒 Security & Scope
 
 - All included telemetry and guest data is synthetic.
 - API keys are server-side environment variables only.
 - Pydantic request models and explicit feature schemas validate inputs.
 - The database is not exposed directly to the browser.
 - Predictions and operational changes are persisted for auditability.
-- Write endpoints are unauthenticated in this MVP and require authentication
-  before production use.
+
+> ⚠️ **Known limitation (MVP):** write endpoints are unauthenticated — acceptable
+> for a hackathon demo, not for production use.
 
 ---
 
-## Team
+## 👥 Team 4Script
 
-**The 4Script** built Resort OS for Hackathon Problem Statement 4:
-**Smart Resort 360**.
+Built for Hackathon Problem Statement 4: **Smart Resort 360**.
 
-License: MIT
+---
 
-> **Predict early. Protect the room. Let the team decide.**
+## 📄 License
+
+MIT — use it, fork it, learn from it.
+
+---
+
+<div align="center">
+<i>Predict early. Protect the room. Let the team decide.</i>
+</div>
